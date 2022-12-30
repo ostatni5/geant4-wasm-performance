@@ -3,15 +3,6 @@ self.dependecyArray = new Set();
 
 var preModule = {
     preRun: [function () {
-        // function stdin() {
-        //   // Return ASCII code of character, or null if no input
-        //   // return prompt('Dawaj pan inputa jak grzecznie prosze')
-        //   return null
-        // }
-
-        // var stdout = null; // Keep as default
-        // var stderr = null;  // Keep as default
-        // FS.init(stdin, stdout, stderr);
 
         FS.createLazyFile('/', 'exampleB1.in', '/wasm/B1/build/exampleB1.in', true, true);
 
@@ -20,8 +11,6 @@ var preModule = {
     onRuntimeInitialized: function () {
         console.log("onRuntimeInitialized");
         postMessage({ type: 'event', data: "onRuntimeInitialized" });
-
-        // Module.main2('exampleB1.in');
     },
     print: (function () {
 
@@ -53,7 +42,7 @@ var preModule = {
 
 preModule['locateFile'] = function (path, prefix) {
     // if it's a mem init file, use a custom dir
-    if (path.endsWith(".data") || path.endsWith(".wasm")) return "/wasm/B1/build/" + path;
+    if (path.endsWith(".data") || path.endsWith(".wasm")) return "/example/B1/build/wasm/" + path;
     // otherwise, use the default, the prefix (JS file's dir) + the path
     return prefix + path;
 }
@@ -92,7 +81,4 @@ self.addEventListener("message", function (e) {
     writeFile(e.data)
 }, false);
 
-// Example({ ...preModule }).then(m => {
-//     m.main2('exampleB1.in');
-//     return m;
-// });
+

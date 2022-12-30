@@ -1,15 +1,15 @@
 cd ./example/B1
 
-# rm -rf ./build/native/*
-# mkdir -p ./build/native 
+rm -rf ./build/native/*
+mkdir -p ./build/native 
 
-# cd ./build/native
+cd ./build/native
 
-# source ../../../../geant4/native/geant4.10.04.p03/install/bin/geant4.sh 
-# cmake -DGeant4_DIR=../../../../geant4/native/geant4.10.04.p03/install/lib/Geant4-10.4.3 ../../
-# make -j
+source ../../../../geant4/native/geant4.10.04.p03/install/bin/geant4.sh 
+cmake -DGeant4_DIR=../../../../geant4/native/geant4.10.04.p03/install/lib/Geant4-10.4.3 ../../
+make -j
 
-# cd ../../
+cd ../../
 
 
 rm -rf ./build/wasm/*
