@@ -8,22 +8,22 @@ Output of simulation in browser is displayed in console.
 
 Run scripts from  the root of repository.
 
-Downloads and installs `emscripten` and `Geant`:
+Downloads and installs `emscripten` and `Geant4`:
 
 ```sh
-buildGeant.sh
+./buildGeant.sh
 ```
 
 Builds test example:
 
 ```sh
-buildExample.sh
+./buildExample.sh
 ```
 
 Starts simple http server to host WebAssembly example:
 
 ```sh
-hostExample.sh
+./hostExample.sh
 ```
 
 Navigate to `http://127.0.0.1:5500/example/web/shell_minimal_worker.html`.
