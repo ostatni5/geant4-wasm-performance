@@ -26,6 +26,8 @@ Starts simple http server to host WebAssembly example:
 hostExample.sh
 ```
 
+Navigate to `http://127.0.0.1:5500/example/web/shell_minimal_worker.html`.
+
 ## Dependencies
 
 Project tested on:
