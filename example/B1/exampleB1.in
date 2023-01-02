@@ -1,5 +1,6 @@
 /process/em/verbose 0
 /run/verbose 0
+/control/verbose 0
 
 /score/create/boxMesh boxMesh
 /score/mesh/boxSize 40. 40. 40. cm
@@ -8,13 +9,16 @@
 
 /score/close
 
-
 /run/initialize
-#
-#/control/verbose 0
-#/run/verbose 0
-# 
-/gun/particle proton
-/gun/energy 210 MeV
-#
+
+/process/em/verbose 0
+/run/verbose 0
+/control/verbose 0
+
+
+/gps/particle proton
+/gps/energy 210 MeV
+/gps/direction 0. 0. 1.
+/gps/position 0. 0. -2 cm
+
 /run/beamOn 1
