@@ -55,7 +55,7 @@ B1SteppingAction::~B1SteppingAction()
 void B1SteppingAction::UserSteppingAction(const G4Step* step)
 { 
     // print pre step point
-    G4cout << "PreStepPoint: " << step->GetPreStepPoint()->GetPosition() << G4endl;
+    G4cout << "PreStepPoint: (" << step->GetTrack()->GetDefinition()->GetParticleName() << ") : "  << step->GetPreStepPoint()->GetPosition() << " [mm]" << G4endl;
   
 }
 

@@ -56,6 +56,8 @@ void B1EventAction::BeginOfEventAction(const G4Event*)
 
 void B1EventAction::EndOfEventAction(const G4Event*)
 {   
+    // print event number
+    G4cout << "Event: " << G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID() << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
