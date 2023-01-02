@@ -53,14 +53,6 @@ void init()
    // Activate command-based scorer
   G4ScoringManager::GetScoringManager();
 
-  // G4RunManager* runManager;
-  // try{
-  //   runManager = new G4RunManager;
-  // }catch(G4Exception& e){
-  //   std::cout << e.GetMessage() << std::endl;
-  //   runManager = G4RunManager::GetRunManager();
-  // }
-
   G4cout << "SetUserInitialization" << G4endl;
   // Detector construction
   runManager->SetUserInitialization(new B1DetectorConstruction());
