@@ -4,7 +4,7 @@
 
 /score/create/boxMesh boxMesh
 /score/mesh/boxSize 50. 50. 50. mm
-/score/mesh/nBin 1 1 100
+/score/mesh/nBin 1 1 1
 /score/quantity/energyDeposit eDep
 
 /score/close
