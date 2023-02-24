@@ -1,27 +1,24 @@
-# Macro file for example B1
-# 
-# To be run preferably in batch, without graphics:
-# % exampleB1 run2.mac
-#
-#/run/numberOfWorkers 4
+/process/em/verbose 0
+/run/verbose 0
+/control/verbose 0
+
+/score/create/boxMesh boxMesh
+/score/mesh/boxSize 50. 50. 50. mm
+/score/mesh/nBin 1 1 1
+/score/quantity/energyDeposit eDep
+
+/score/close
+
 /run/initialize
-#
-/control/verbose 2
-/run/verbose 2
-#
-# gamma 6 MeV to the direction (0.,0.,1.)
-# 10000 events
-#
-/gun/particle gamma
-/gun/energy 6 MeV
-#
-/run/printProgress 100
-/run/beamOn 1000
-# 
-# proton 210 MeV to the direction (0.,0.,1.)
-# 1000 events
-#
-/gun/particle proton
-/gun/energy 210 MeV
-#
-/run/beamOn 10000
+
+/process/em/verbose 0
+/run/verbose 0
+/control/verbose 0
+
+
+/gps/particle proton
+/gps/energy 60 MeV
+/gps/direction 0. 0. 1.
+/gps/position 0. 0. -2 cm
+
+/run/beamOn 100
