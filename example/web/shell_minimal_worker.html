@@ -16,48 +16,30 @@
 
   <script>
     const simulationConf = `
-/run/initialize
-#
-# define scoring mesh
-#
-/score/create/boxMesh boxMesh_1
-/score/mesh/boxSize 10. 10. 10. cm
-/score/mesh/nBin 1 1 10
-#
-#
-# define scorers and filters
-#
-/score/quantity/energyDeposit eDep
-/score/quantity/nOfStep nOfStepGamma
-/score/filter/particle gammaFilter gamma
-/score/quantity/nOfStep nOfStepEMinus
-/score/filter/particle eMinusFilter e-
-/score/quantity/nOfStep nOfStepEPlus
-/score/filter/particle ePlusFilter e+
-#
-/score/close
-#
-
-/control/verbose 0
+/process/em/verbose 0
 /run/verbose 0
+/control/verbose 0
 
-#
-# gamma 6 MeV to the direction (0.,0.,1.)
-# 10000 events
-#
-/gun/particle gamma
-/gun/energy 6 MeV
-#
-# /run/printProgress 1000
-/run/beamOn 10000
+/score/create/boxMesh boxMesh
+/score/mesh/boxSize 50. 50. 50. mm
+/score/mesh/nBin 1 1 1
+/score/quantity/energyDeposit eDep
 
-# Dump scorers to a file
-#
-/score/dumpQuantityToFile boxMesh_1 nOfStepGamma nOfStepGamma.txt
-/score/dumpQuantityToFile boxMesh_1 eDep eDep.txt
-#
-#
+/score/close
 
+/run/initialize
+
+/process/em/verbose 0
+/run/verbose 0
+/control/verbose 0
+
+
+/gps/particle proton
+/gps/energy 60 MeV
+/gps/direction 0. 0. 1.
+/gps/position 0. 0. -2 cm
+
+/run/beamOn 100
 `
 
 
