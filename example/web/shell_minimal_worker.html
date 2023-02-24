@@ -6,11 +6,25 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Geant4 in WebAssembly</title>
 </head>
+<style>
+  body {
+    font-family: 'Courier New', Courier, monospace;
+  }
+</style>
 
 <body>
 
-  <textarea id="emscriptenInput" rows="30" style="width: 800px;">
-  </textarea>
+  <main style="display:flex">
+    <section>
+      <h2>Simulation Config</h2>
+      <textarea id="emscriptenInputConfig" rows="30" style="width: 400px; margin: 5px;"></textarea>
+    </section>
+
+    <!-- <section>
+    <h2>Detector Config</h2>
+      <textarea id="emscriptenInputDetector" rows="30" style="width: 400px; margin: 5px;"></textarea>
+    </section> -->
+  </main>
   <br>
   <button id="run">Run simulation</button>
 
@@ -44,9 +58,9 @@
 
 
     const runButton = document.querySelector('#run');
-    const emscriptenInput = document.querySelector('#emscriptenInput');
+    const emscriptenInputConfig = document.querySelector('#emscriptenInputConfig');
     let index = 0;
-    emscriptenInput.value = simulationConf;
+    emscriptenInputConfig.value = simulationConf;
 
     const handleClick = () => new Promise((resolve) => {
       index++;

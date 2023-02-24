@@ -1,4 +1,5 @@
 #include "B1DetectorConstruction.hh"
+#include "B1DetectorConstructionTxt.hh"
 #include "B1ActionInitialization.hh"
 
 #include "G4RunManager.hh"
@@ -55,7 +56,7 @@ void init()
 
   G4cout << "SetUserInitialization" << G4endl;
   // Detector construction
-  runManager->SetUserInitialization(new B1DetectorConstruction());
+  runManager->SetUserInitialization(new B1DetectorConstructionTxt());
 
   G4cout << "physicsList" << G4endl;
   // Physics list

@@ -4,7 +4,8 @@ self.dependecyArray = new Set();
 var preModule = {
     preRun: [function () {
 
-        FS.createLazyFile('/', 'exampleB1.in', '/wasm/B1/build/exampleB1.in', true, true);
+        FS.createLazyFile('/', 'exampleB1.in', '/example/B1/build/wasm/exampleB1.in', true, true);
+        FS.createLazyFile('/', 'g4geom.txt', '/example/B1/build/wasm/g4geom.txt', true, true);
 
     }],
     postRun: [],
@@ -58,23 +59,18 @@ importScripts("../B1/build/wasm/exampleB1.js")
 const writeFile = (data) => {
     FS.writeFile('example.in', data);
     var contents = FS.readFile('example.in', { encoding: 'utf8' });
-    console.log(contents);
+    console.log('example.in', contents);
+    var contents = FS.readFile('g4geom.txt', { encoding: 'utf8' });
+    console.log('g4geom.txt', contents);
+
 
     Module.init();
 
     Module.run('example.in');
 
-    // console.log(self.dependecyArray)  
-    
-
-    // Module.run('exampleB1.in');
     postMessage({ type: 'result', data: self.fullTime });
 
     Module.clear();
-
-    var contents = FS.readFile('nOfStepGamma.txt', { encoding: 'utf8' });
-    console.log(contents);
-
 }
 
 self.addEventListener("message", function (e) {
