@@ -67,7 +67,7 @@ G4VPhysicalVolume* B1DetectorConstruction::Construct()
    
   // Option to switch on/off checking of volumes overlaps
   //
-  G4bool checkOverlaps = true;
+  G4bool checkOverlaps = false;
 
   //     
   // World
