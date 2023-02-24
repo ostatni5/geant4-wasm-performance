@@ -67,6 +67,7 @@ endif()
 #
 set(EXAMPLEB1_SCRIPTS
   exampleB1.in
+  g4geom.txt
   )
 
 foreach(_script ${EXAMPLEB1_SCRIPTS})
