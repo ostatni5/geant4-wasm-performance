@@ -25,8 +25,15 @@ GEANT4_COMPILE_PARAMS="-DCMAKE_INSTALL_PREFIX=../install \
         -DGEANT4_BUILD_STORE_TRAJECTORY=OFF \
         -DBUILD_SHARED_LIBS=OFF \
         -DGEANT4_INSTALL_DATA=ON ../../../source/geant4.10.04.p03"
- # $1 - download flag default true
-DOWNLOAD=${1:-true}
+# $1 - download flag default true
+MODE=${1:-"downloadAndCompile"}
+echo "Build mode: $MODE"
+DOWNLOAD=true
+if [ $MODE = "downloadAndCompile" ]; then
+    DOWNLOAD=true
+elif [ $MODE = "justCompile" ]; then
+    DOWNLOAD=false
+fi
 # functions
 
 # function for getting geant4
