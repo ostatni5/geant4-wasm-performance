@@ -505,8 +505,11 @@ def get_memory_usage(pids_to_show, split_args, discriminate_by_pid,
             #process gone
             continue
         
-        if cmd.split(" ")[0] != "exampleB1":
+        watched_names =['chrome','exampleB1','firefox']
+
+        if cmd.split(" ")[0] not in watched_names:
             continue
+
 
         try:
             private, shared, shared_huge, swap, mem_id = getMemStats(pid)
