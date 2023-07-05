@@ -22,3 +22,5 @@
 /gps/position 0. 0. -2 cm
 
 /run/beamOn 100
+
+/score/dumpQuantityToFile boxMesh eDep eDep.txt

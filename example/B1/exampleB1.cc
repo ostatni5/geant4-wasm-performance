@@ -5,7 +5,6 @@
 #include "G4RunManager.hh"
 #include "G4ScoringManager.hh"
 
-
 #include "G4UImanager.hh"
 #include "QBBC.hh"
 
@@ -21,27 +20,26 @@
 
 #include <chrono>
 
-
 G4RunManager *runManager;
 G4UImanager *UImanager;
 
 void init()
 {
-  #ifdef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
   EM_ASM(
 
-    // const out = console.log;
-    // FS.trackingDelegate['onOpenFile'] = function(path, flags) {
-    //   out('Opened "' + path + '" with flags ' + flags);
-    //   self.dependecyArray.add(path);
-    // };
+      // const out = console.log;
+      // FS.trackingDelegate['onOpenFile'] = function(path, flags) {
+      //   out('Opened "' + path + '" with flags ' + flags);
+      //   self.dependecyArray.add(path);
+      // };
 
-    // FS.trackingDelegate['onCloseFile'] = function(path) {
-    //   out('Closed ' + path);
-    // };
+      // FS.trackingDelegate['onCloseFile'] = function(path) {
+      //   out('Closed ' + path);
+      // };
 
   );
-  #endif
+#endif
 
   G4cout << "setTheEngine" << G4endl;
   // Choose the Random engine
@@ -51,7 +49,7 @@ void init()
   // Construct the default run manager
   runManager = new G4RunManager;
 
-   // Activate command-based scorer
+  // Activate command-based scorer
   G4ScoringManager::GetScoringManager();
 
   G4cout << "SetUserInitialization" << G4endl;
@@ -71,22 +69,21 @@ void init()
   G4cout << "UImanager" << G4endl;
   // Get the pointer to the User Interface manager
   UImanager = G4UImanager::GetUIpointer();
-
 }
 
-void run(std::string name){
-  
+void run(std::string name)
+{
+
   G4cout << "ApplyCommand" << G4endl;
   // batch mode
   G4String command = "/control/execute ";
   G4String fileName = name;
 
-  #ifdef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
   EM_ASM(
       console.time("Simulation run");
-      self.startTime = performance.now();
-  );
-  #endif
+      self.startTime = performance.now(););
+#endif
 
   auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -98,18 +95,23 @@ void run(std::string name){
 
   G4cout << ms_double.count() << "ms\n";
 
-  #ifdef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
   EM_ASM(
-    console.timeEnd("Simulation run");
-    self.endTime=performance.now();
-    self.fullTime = self.endTime - self.startTime;
-    console.log(fullTime)
-  );
-  #endif
+      console.timeEnd("Simulation run");
+      self.endTime = performance.now();
+      self.fullTime = self.endTime - self.startTime;
+      console.log(fullTime));
+#endif
 
+  // write time to file
+  std::ofstream myfile;
+  myfile.open("time.txt");
+  myfile << ms_double.count();
+  myfile.close();
 }
 
-void clear(){
+void clear()
+{
   // Job termination
   // Free the store: user actions, physics_list and detector_description are
   // owned and deleted by the run manager, so they should not be deleted
@@ -120,7 +122,7 @@ void clear(){
 }
 
 #ifndef __EMSCRIPTEN__
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   init();
   run("exampleB1.in");

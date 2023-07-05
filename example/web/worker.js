@@ -18,7 +18,7 @@ var preModule = {
         return function (text) {
             if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
 
-            console.log(text);
+            // console.log(text);
             postMessage({ type: 'print', data: text });
 
         };
@@ -57,18 +57,27 @@ importScripts("../B1/build/wasm/exampleB1.js")
 
 
 const writeFile = (data) => {
-    FS.writeFile('example.in', data);
-    var contents = FS.readFile('example.in', { encoding: 'utf8' });
-    console.log('example.in', contents);
-    var contents = FS.readFile('g4geom.txt', { encoding: 'utf8' });
-    console.log('g4geom.txt', contents);
+    const useCustomInput = data && data.length > 0;
+    const inputFileName = useCustomInput ? 'example.in' : 'exampleB1.in';
 
+    if (useCustomInput)
+        FS.writeFile(inputFileName, data);
+
+    const inputFile = FS.readFile(inputFileName, { encoding: 'utf8' });
+    console.log(inputFileName, inputFile);
+
+    //  find lines with /score/dumpQuantityToFile and get the file names
+    const lines = inputFile.split('\n');
+    const dumpQuantityToFileLines = lines.filter(line => line.includes('/score/dumpQuantityToFile'));
+    const resultFileNames = dumpQuantityToFileLines.map(line => line.split(' ')[3]);
+    console.log('resultFileNames', resultFileNames);
 
     Module.init();
 
-    Module.run('example.in');
+    Module.run(inputFileName);
 
-    postMessage({ type: 'result', data: self.fullTime });
+    const resultFiles = resultFileNames.map(fileName => ({ name: fileName, content: FS.readFile(fileName, { encoding: 'utf8' }) }));
+    postMessage({ type: 'result', data: { time: self.fullTime, files: resultFiles } });
 
     Module.clear();
 }

@@ -28,39 +28,18 @@
   <br>
   <button id="run">Run simulation</button>
 
+
+  <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
   <script>
-    const simulationConf = `
-/process/em/verbose 0
-/run/verbose 0
-/control/verbose 0
 
-/score/create/boxMesh boxMesh
-/score/mesh/boxSize 50. 50. 50. mm
-/score/mesh/nBin 1 1 1
-/score/quantity/energyDeposit eDep
-
-/score/close
-
-/run/initialize
-
-/process/em/verbose 0
-/run/verbose 0
-/control/verbose 0
-
-
-/gps/particle proton
-/gps/energy 60 MeV
-/gps/direction 0. 0. 1.
-/gps/position 0. 0. -2 cm
-
-/run/beamOn 100
-`
-
+    function saveAsFile(content, fileName) {
+      var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      saveAs(blob, fileName);
+    }
 
     const runButton = document.querySelector('#run');
     const emscriptenInputConfig = document.querySelector('#emscriptenInputConfig');
     let index = 0;
-    emscriptenInputConfig.value = simulationConf;
 
     const handleClick = () => new Promise((resolve) => {
       index++;
@@ -73,10 +52,14 @@
         switch (e.data.type) {
           case 'event':
             if (e.data.data === "onRuntimeInitialized")
-              worker.postMessage(simulationConf)
+              worker.postMessage(emscriptenInputConfig.value)
             break;
           case 'result':
-            console.log(`Data from worker:${e.data.data}`)
+            console.log(`Data from worker:${e.data.data.time}`)
+            // e.data.data.files.forEach((file, index) => {
+            //   saveAsFile(file.content, file.name);
+            // })
+
             resolve(e.data.data)
             break;
           case 'print':
