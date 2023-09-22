@@ -1,5 +1,36 @@
 const chrome = require('selenium-webdriver/chrome');
 const firefox = require('selenium-webdriver/firefox');
+
+const { exec, execSync } = require('node:child_process');
+
+const createPsMem = (name, logFile, interval = 0.2) => {
+    const ps = exec(`python3 ./watch_memory.py -l ${logFile} -n ${name} -t ${interval} `, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`exec error: ${error}`);
+            return;
+        }
+    });
+
+    var cleanExit = function () {
+        console.log('Killing logging process', ps.kill('SIGKILL'));
+        process.off('SIGINT', cleanExit);
+        process.off('SIGTERM', cleanExit);
+    };
+    process.on('SIGINT', cleanExit); // catch ctrl-c
+    process.on('SIGTERM', cleanExit); // catch kill
+
+    return ps;
+}
+
+const withMemoryLogging = async (name, logFile, func) => {
+    const ps = createPsMem(name, logFile, 0.1);
+    const result = await func();
+    console.log('Killing logging process', ps.kill('SIGKILL'));
+
+    return result;
+};
+
+
 const fs = require('fs');
 const { Builder } = require('selenium-webdriver');
 const screen = {
@@ -64,8 +95,7 @@ const nativeTest = async () => {
 
 
     // run compiled c++ code 
-    const { exec } = require("child_process");
-    exec("cd ./tmp/native && ./exampleB1", (error, stdout, stderr) => {
+    execSync("cd ./tmp/native && ./exampleB1", (error, stdout, stderr) => {
         if (error) {
             console.log(`error: ${error.message}`);
             return;
@@ -81,13 +111,14 @@ const nativeTest = async () => {
 
     // read time from time.txt
     const time = fs.readFileSync('./tmp/native/time.txt', { encoding: 'utf8' });
-    console.log('Native', +time);
+    console.log('Native', + time);
 }
 
 const runTests = async () => {
-    await chromeTest();
-    await firefoxTest();
-    await nativeTest();
+    await withMemoryLogging('Chrome', './tmp/chrome_memory.log', chromeTest);
+    await withMemoryLogging('Firefox', './tmp/firefox_memory.log', firefoxTest);
+    await withMemoryLogging('Native', './tmp/native_memory.log', nativeTest);
+    ;
 }
 
 runTests();

@@ -80,6 +80,8 @@ const writeFile = (data) => {
     postMessage({ type: 'result', data: { time: self.fullTime, files: resultFiles } });
 
     Module.clear();
+
+    close();
 }
 
 self.addEventListener("message", function (e) {
