@@ -2,7 +2,11 @@
 #include "B1DetectorConstructionTxt.hh"
 #include "B1ActionInitialization.hh"
 
+#ifdef G4MULTITHREADED
+#include "G4MTRunManager.hh"
+#else
 #include "G4RunManager.hh"
+#endif
 #include "G4ScoringManager.hh"
 
 #include "G4UImanager.hh"
@@ -20,10 +24,15 @@
 
 #include <chrono>
 
+#ifdef G4MULTITHREADED
+G4MTRunManager *runManager;
+#else
 G4RunManager *runManager;
+#endif
+
 G4UImanager *UImanager;
 
-void init()
+void init(long seed, int nThreads = 1)
 {
 #ifdef __EMSCRIPTEN__
   EM_ASM(
@@ -40,14 +49,23 @@ void init()
 
   );
 #endif
-
   G4cout << "setTheEngine" << G4endl;
   // Choose the Random engine
   G4Random::setTheEngine(new CLHEP::RanecuEngine);
 
+  // Seed the random number generator manually
+  G4cout << "Initialising with seed: " << seed << G4endl;
+  G4Random::setTheSeed(seed);
+  G4cout << "Initialised seed: " << G4Random::getTheSeed() << G4endl;
+
   G4cout << "new runManager" << G4endl;
-  // Construct the default run manager
+// Construct the default run manager
+#ifdef G4MULTITHREADED
+  runManager = new G4MTRunManager;
+  runManager->SetNumberOfThreads(nThreads);
+#else
   runManager = new G4RunManager;
+#endif
 
   // Activate command-based scorer
   G4ScoringManager::GetScoringManager();
@@ -124,8 +142,11 @@ void clear()
 #ifndef __EMSCRIPTEN__
 int main(int argc, char **argv)
 {
-  init();
-  run("exampleB1.in");
+  std::string name = argv[1] ? argv[1] : "exampleB1.in";
+  long seed = argv[2] ? std::stol(argv[2]) : 1234;
+  int nThreads = argv[3] ? std::stol(argv[3]) : 1;
+  init(seed, nThreads);
+  run(name);
   clear();
 }
 #endif

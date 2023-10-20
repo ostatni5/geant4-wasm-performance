@@ -59,12 +59,16 @@ function compile_geant4 {
     # go to build catalog
     cd geant4.10.04.p03/build/
 
+    if [ $1 = "native-multithread" ]; then
+        GEANT4_COMPILE_PARAMS="${GEANT4_COMPILE_PARAMS} -DGEANT4_BUILD_MULTITHREADED=ON"
+    fi
+
     # check if compiler is cmake or emcmake
     if [ $2 = "cmake" ]; then
         cmake ${GEANT4_COMPILE_PARAMS}
 
         # run make
-        make -j
+        make -j # consider using  less than number of cores
         make install
     elif [ $2 = "emcmake" ]; then
         emcmake cmake ${GEANT4_COMPILE_PARAMS}
@@ -90,5 +94,8 @@ compile_geant4 "native" "cmake"
 
 # wasm
 compile_geant4 "wasm" "emcmake"
+
+#native multithread
+compile_geant4 "native-multithread" "cmake"
 
 cd ..

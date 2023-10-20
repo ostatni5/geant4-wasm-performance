@@ -200,6 +200,12 @@ def parse_options():
         type=float,
         help="Measure and show process memory every N seconds",
     )
+    parser.add_argument(
+        "-n",
+        dest="names",
+        metavar="<name>[,name2,...nameN]",
+        help="Only show memory usage for processes with the specified names",
+    )
     args = parser.parse_args()
 
     args.pids_to_show = []
@@ -221,6 +227,7 @@ def parse_options():
         args.only_total,
         args.discriminate_by_pid,
         args.show_swap,
+        args.names,
     )
 
 
@@ -491,7 +498,12 @@ def show_val_accuracy(ram_inacc, swap_inacc, only_total, show_swap):
 
 
 def get_memory_usage(
-    pids_to_show, split_args, discriminate_by_pid, include_self=False, only_self=False
+    pids_to_show,
+    split_args,
+    discriminate_by_pid,
+    include_self=False,
+    only_self=False,
+    watched_names=None,
 ):
     cmds = {}
     shareds = {}
@@ -520,9 +532,7 @@ def get_memory_usage(
             # process gone
             continue
 
-        watched_names = ["chrome", "exampleB1", "firefox"]
-
-        if cmd.split(" ")[0] not in watched_names:
+        if watched_names is not None and cmd.split(" ")[0] not in watched_names:
             continue
 
         try:
@@ -650,6 +660,7 @@ def main():
         only_total,
         discriminate_by_pid,
         show_swap,
+        names,
     ) = parse_options()
 
     verify_environment(pids_to_show)
@@ -668,7 +679,9 @@ def main():
                     total,
                     swaps,
                     total_swap,
-                ) = get_memory_usage(pids_to_show, split_args, discriminate_by_pid)
+                ) = get_memory_usage(
+                    pids_to_show, split_args, discriminate_by_pid, watched_names=names
+                )
                 if only_total and show_swap and have_swap_pss:
                     sys.stdout.write(human(total_swap, units=1) + "\n")
                 elif only_total and not show_swap and have_pss:
@@ -687,7 +700,7 @@ def main():
     else:
         # This is the default behavior
         sorted_cmds, shareds, count, total, swaps, total_swap = get_memory_usage(
-            pids_to_show, split_args, discriminate_by_pid
+            pids_to_show, split_args, discriminate_by_pid, watched_names=names
         )
         if only_total and show_swap and have_swap_pss:
             sys.stdout.write(human(total_swap, units=1) + "\n")

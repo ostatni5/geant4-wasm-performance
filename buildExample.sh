@@ -13,6 +13,19 @@ build_native () {
     cd ../../
 }
 
+build_native_multithread () {
+    rm -rf ./build/native-multithread/*
+    mkdir -p ./build/native-multithread 
+
+    cd ./build/native-multithread
+
+    source ../../../../geant4/native-multithread/geant4.10.04.p03/install/bin/geant4.sh 
+    cmake -DGeant4_DIR=../../../../geant4/native-multithread/geant4.10.04.p03/install/lib/Geant4-10.4.3 -DCMAKE_INSTALL_PREFIX=./install -DGEANT4_BUILD_MULTITHREADED=ON ../../
+    make -j
+
+    cd ../../
+}
+
 build_wasm () {
     rm -rf ./build/wasm/*
     mkdir -p ./build/wasm 
@@ -30,6 +43,9 @@ build_wasm () {
     cd ../../
 }
 
-build_native & build_wasm
+build_native & 
+build_wasm & 
+build_native_multithread &
+wait
 
 cd ../../

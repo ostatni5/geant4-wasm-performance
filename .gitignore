@@ -5,3 +5,6 @@
 /geant4
 
 **/venv
+
+
+*.log

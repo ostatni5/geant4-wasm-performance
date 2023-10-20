@@ -43,7 +43,7 @@ target_link_libraries(exampleB1 ${Geant4_LIBRARIES})
 
 if(EMSCRIPTEN)
   set_target_properties(exampleB1 PROPERTIES
-    LINK_FLAGS " -sFS_DEBUG -g3 -s TOTAL_MEMORY=270MB -s WASM=1 \
+    LINK_FLAGS "-s TOTAL_MEMORY=270MB -s WASM=1 \
     --use-preload-cache \
     --pre-js ../../setup_env.js \
     --preload-file ../../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/G4ENSDFSTATE2.2@/data/G4ENSDFSTATE2.2 \

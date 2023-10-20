@@ -39,23 +39,24 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-B1SteppingAction::B1SteppingAction(B1EventAction* eventAction)
-: G4UserSteppingAction(),
-  fEventAction(eventAction)
-{}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-B1SteppingAction::~B1SteppingAction()
-{}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void B1SteppingAction::UserSteppingAction(const G4Step* step)
-{ 
-    // print pre step point
-    G4cout << "PreStepPoint: (" << step->GetTrack()->GetDefinition()->GetParticleName() << ") : "  << step->GetPreStepPoint()->GetPosition() << " [mm]" << G4endl;
+B1SteppingAction::B1SteppingAction(B1EventAction *eventAction)
+    : G4UserSteppingAction(),
+      fEventAction(eventAction)
+{
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+B1SteppingAction::~B1SteppingAction()
+{
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void B1SteppingAction::UserSteppingAction(const G4Step *step)
+{
+    // print pre step point
+    // G4cout << "PreStepPoint: (" << step->GetTrack()->GetDefinition()->GetParticleName() << ") : "  << step->GetPreStepPoint()->GetPosition() << " [mm]" << G4endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

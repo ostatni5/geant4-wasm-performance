@@ -57,11 +57,11 @@ importScripts("../B1/build/wasm/exampleB1.js")
 
 
 const writeFile = (data) => {
-    const useCustomInput = data && data.length > 0;
+    const useCustomInput = data && 'input' in data && data.input.length > 0;
     const inputFileName = useCustomInput ? 'example.in' : 'exampleB1.in';
 
     if (useCustomInput)
-        FS.writeFile(inputFileName, data);
+        FS.writeFile(inputFileName, data.input);
 
     const inputFile = FS.readFile(inputFileName, { encoding: 'utf8' });
     console.log(inputFileName, inputFile);
@@ -72,13 +72,16 @@ const writeFile = (data) => {
     const resultFileNames = dumpQuantityToFileLines.map(line => line.split(' ')[3]);
     console.log('resultFileNames', resultFileNames);
 
-    Module.init();
+    console.log('init');
+    Module.init(data.seed);
 
+    console.log('run');
     Module.run(inputFileName);
 
     const resultFiles = resultFileNames.map(fileName => ({ name: fileName, content: FS.readFile(fileName, { encoding: 'utf8' }) }));
     postMessage({ type: 'result', data: { time: self.fullTime, files: resultFiles } });
 
+    console.log('clear');
     Module.clear();
 
     close();

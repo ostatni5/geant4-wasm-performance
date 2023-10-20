@@ -31,7 +31,7 @@
 
   <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
   <script>
-
+    window.SEED = 22226666;
     function saveAsFile(content, fileName) {
       var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
       saveAs(blob, fileName);
@@ -52,7 +52,7 @@
         switch (e.data.type) {
           case 'event':
             if (e.data.data === "onRuntimeInitialized")
-              worker.postMessage(emscriptenInputConfig.value)
+              worker.postMessage({ seed: window.SEED, input: emscriptenInputConfig.value, type: 'run' })
             break;
           case 'result':
             console.log(`Data from worker:${e.data.data.time}`)
@@ -63,7 +63,7 @@
             resolve(e.data.data)
             break;
           case 'print':
-          // console.log(`Worker${index}:${e.data.data}`);
+            console.log(`Worker${index}:${e.data.data}`);
           default:
           // console.log(`Worker ${index}: ${e.data.type} ${e.data.data}`);
         }
