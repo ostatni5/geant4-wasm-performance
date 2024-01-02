@@ -16,10 +16,10 @@ var preModule = {
     print: (function () {
 
         return function (text) {
-            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            // if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
 
             // console.log(text);
-            postMessage({ type: 'print', data: text });
+            // postMessage({ type: 'print', data: text });
 
         };
     })(),
@@ -58,10 +58,13 @@ importScripts("../B1/build/wasm/exampleB1.js")
 
 const writeFile = (data) => {
     const useCustomInput = data && 'input' in data && data.input.length > 0;
-    const inputFileName = useCustomInput ? 'example.in' : 'exampleB1.in';
+    const inputFileName = 'example.in';
+    const nWorkers = data.nWorkers ?? 1;
 
     if (useCustomInput)
         FS.writeFile(inputFileName, data.input);
+    else
+        FS.writeFile(inputFileName, FS.readFile('exampleB1.in', { encoding: 'utf8' }));
 
     const inputFile = FS.readFile(inputFileName, { encoding: 'utf8' });
     console.log(inputFileName, inputFile);
@@ -72,17 +75,42 @@ const writeFile = (data) => {
     const resultFileNames = dumpQuantityToFileLines.map(line => line.split(' ')[3]);
     console.log('resultFileNames', resultFileNames);
 
+    //  replace line in file /run/beamOn N with /run/beamOn N/4
+    const beamOnLine = lines.find(line => line.includes('/run/beamOn'));
+    const beamOn = beamOnLine.split(' ')[1];
+    const newBeamOn = Math.floor(beamOn / nWorkers);
+    const newInputFile = inputFile.replace(beamOnLine, `/run/beamOn ${newBeamOn}`);
+    console.log('newInputFile', newInputFile);
+
+    FS.writeFile(inputFileName, newInputFile);
+
+    const preInit = performance.now()
     console.log('init');
-    Module.init(data.seed);
+    Module.init(data.seed, data.nWorkers);
+    const preRun = performance.now()
 
     console.log('run');
-    Module.run(inputFileName);
+    const fullTime = Module.run(inputFileName);
 
     const resultFiles = resultFileNames.map(fileName => ({ name: fileName, content: FS.readFile(fileName, { encoding: 'utf8' }) }));
-    postMessage({ type: 'result', data: { time: self.fullTime, files: resultFiles } });
 
+
+    const preClear = performance.now()
     console.log('clear');
     Module.clear();
+
+    postMessage({
+        type: 'result', data: {
+            time: fullTime, files: resultFiles, times: {
+                preInit,
+                init: preRun - preInit,
+                preRun,
+                run: preClear - preRun,
+                preClear,
+                clear: performance.now() - preClear
+            }
+        }
+    });
 
     close();
 }

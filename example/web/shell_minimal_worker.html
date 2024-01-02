@@ -32,6 +32,7 @@
   <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
   <script>
     window.SEED = 22226666;
+    window.N_WORKERS = 1;
     function saveAsFile(content, fileName) {
       var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
       saveAs(blob, fileName);
@@ -41,37 +42,87 @@
     const emscriptenInputConfig = document.querySelector('#emscriptenInputConfig');
     let index = 0;
 
-    const handleClick = () => new Promise((resolve) => {
-      index++;
-      console.log(`Run simulation ${index}`);
-      console.log(`Waiting for runtime to be initialized...`);
+
+    const initWorkers = () => new Array(N_WORKERS).fill(0).map((_, i) => new Promise((resolve) => {
       const worker = new Worker("worker.js");
-
-
       worker.onmessage = function (e) {
         switch (e.data.type) {
           case 'event':
             if (e.data.data === "onRuntimeInitialized")
-              worker.postMessage({ seed: window.SEED, input: emscriptenInputConfig.value, type: 'run' })
-            break;
-          case 'result':
-            console.log(`Data from worker:${e.data.data.time}`)
-            // e.data.data.files.forEach((file, index) => {
-            //   saveAsFile(file.content, file.name);
-            // })
-
-            resolve(e.data.data)
-            break;
-          case 'print':
-            console.log(`Worker${index}:${e.data.data}`);
-          default:
-          // console.log(`Worker ${index}: ${e.data.type} ${e.data.data}`);
+              resolve(worker)
         }
       }
+    }))
+
+
+
+    const handleClick = () => new Promise(async (resolve) => {
+      const start = performance.now();
+
+
+
+      index++;
+      console.log(`Run simulation ${index}`);
+      console.log(`Seed: ${window.SEED}`);
+      console.log(`Number of workers: ${window.N_WORKERS}`);
+      console.log(`Waiting for runtime to be initialized...`);
+
+      const startWorkers = performance.now();
+      let eagerWorkers = initWorkers(); //massive performance boost
+      await Promise.allSettled(eagerWorkers)
+      const endWorkers = performance.now();
+
+
+
+
+      console.log(`Runtime initialized`);
+
+      Promise.allSettled(eagerWorkers.map((workerPromise, i) => new Promise(async (resolve) => {
+
+        const worker = await workerPromise;
+        console.log(`Worker ${index}-${i} is ready`);
+
+        worker.postMessage({ seed: window.SEED, input: emscriptenInputConfig.value, type: 'run', nWorkers: window.N_WORKERS })
+
+        worker.onmessage = function (e) {
+          switch (e.data.type) {
+            // case 'event':
+            //   if (e.data.data === "onRuntimeInitialized")
+            //     worker.postMessage({ seed: window.SEED, input: emscriptenInputConfig.value, type: 'run', nWorkers: window.N_WORKERS })
+            //   break;
+            case 'result':
+              console.log(`Data from worker:${e.data.data.time}`)
+              // e.data.data.files.forEach((file, index) => {
+              //   saveAsFile(file.content, file.name);
+              // })
+
+              resolve(e.data.data)
+              break;
+            case 'print':
+              console.log(`Worker${index}-${i}:${e.data.data}`);
+            default:
+            // console.log(`Worker ${index}: ${e.data.type} ${e.data.data}`);
+          }
+        }
+      }))).then((results) => {
+        console.log(`All workers finished`);
+        console.log(results);
+        const time = results.map(a => a['value']['time']);
+        const files = results.map(a => a['value']['files']);
+        const times = results.map(a => a['value']['times']);
+        const end = performance.now();
+        const total = end - start;
+        resolve({ "time": time, times, "files": files, "total": total, "workers": window.N_WORKERS, "workersInit": endWorkers - startWorkers });
+      })
+
     })
 
     runButton.onclick = () => {
       handleClick();
+    }
+
+    window.loadEagerWorkers = () => {
+      eagerWorkers = initWorkers();
     }
 
     window.runSimulation = handleClick;

@@ -23,6 +23,7 @@
 #endif
 
 #include <chrono>
+#include <ctime>
 
 #ifdef G4MULTITHREADED
 G4MTRunManager *runManager;
@@ -34,21 +35,8 @@ G4UImanager *UImanager;
 
 void init(long seed, int nThreads = 1)
 {
-#ifdef __EMSCRIPTEN__
-  EM_ASM(
+  auto t1 = std::chrono::system_clock::now();
 
-      // const out = console.log;
-      // FS.trackingDelegate['onOpenFile'] = function(path, flags) {
-      //   out('Opened "' + path + '" with flags ' + flags);
-      //   self.dependecyArray.add(path);
-      // };
-
-      // FS.trackingDelegate['onCloseFile'] = function(path) {
-      //   out('Closed ' + path);
-      // };
-
-  );
-#endif
   G4cout << "setTheEngine" << G4endl;
   // Choose the Random engine
   G4Random::setTheEngine(new CLHEP::RanecuEngine);
@@ -87,9 +75,20 @@ void init(long seed, int nThreads = 1)
   G4cout << "UImanager" << G4endl;
   // Get the pointer to the User Interface manager
   UImanager = G4UImanager::GetUIpointer();
+
+  auto t2 = std::chrono::system_clock::now();
+
+  double ms_double = (t2 - t1).count() / 1000;
+
+  G4cout << "init: " << ms_double << "ms\n";
+
+  std::ofstream myfile;
+  myfile.open("time.txt");
+  myfile << "init," << ms_double << "\n";
+  myfile.close();
 }
 
-void run(std::string name)
+double run(std::string name)
 {
 
   G4cout << "ApplyCommand" << G4endl;
@@ -97,35 +96,31 @@ void run(std::string name)
   G4String command = "/control/execute ";
   G4String fileName = name;
 
-#ifdef __EMSCRIPTEN__
-  EM_ASM(
-      console.time("Simulation run");
-      self.startTime = performance.now(););
-#endif
+  auto t1 = std::chrono::system_clock::now();
 
-  auto t1 = std::chrono::high_resolution_clock::now();
+  std::time_t start_time = std::chrono::system_clock::to_time_t(t1);
+
+  G4cout << "starting computation at " << std::ctime(&start_time) << G4endl;
 
   UImanager->ApplyCommand(command + fileName);
 
-  auto t2 = std::chrono::high_resolution_clock::now();
+  auto t2 = std::chrono::system_clock::now();
 
-  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+  double ms_double = (t2 - t1).count() / 1000000;
 
-  G4cout << ms_double.count() << "ms\n";
+  G4cout << "run: " << ms_double << "ms\n";
 
-#ifdef __EMSCRIPTEN__
-  EM_ASM(
-      console.timeEnd("Simulation run");
-      self.endTime = performance.now();
-      self.fullTime = self.endTime - self.startTime;
-      console.log(fullTime));
-#endif
+  std::time_t end_time = std::chrono::system_clock::to_time_t(t2);
+
+  G4cout << "finished computation at " << std::ctime(&end_time) << "elapsed time: " << ms_double << "ms" << G4endl;
 
   // write time to file
   std::ofstream myfile;
   myfile.open("time.txt");
-  myfile << ms_double.count();
+  myfile << "run," << ms_double << "\n";
   myfile.close();
+
+  return ms_double;
 }
 
 void clear()
@@ -145,6 +140,7 @@ int main(int argc, char **argv)
   std::string name = argv[1] ? argv[1] : "exampleB1.in";
   long seed = argv[2] ? std::stol(argv[2]) : 1234;
   int nThreads = argv[3] ? std::stol(argv[3]) : 1;
+
   init(seed, nThreads);
   run(name);
   clear();

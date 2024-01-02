@@ -1,6 +1,11 @@
 /process/em/verbose 0
-/run/verbose 0
 /control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+
+/run/printProgress -1
 
 /score/create/boxMesh boxMesh
 /score/mesh/boxSize 50. 50. 50. mm
@@ -16,6 +21,6 @@
 /gps/direction 0. 0. 1.
 /gps/position 0. 0. -2 cm
 
-/run/beamOn 100
+/run/beamOn 10000
 
 /score/dumpQuantityToFile boxMesh eDep eDep.txt
