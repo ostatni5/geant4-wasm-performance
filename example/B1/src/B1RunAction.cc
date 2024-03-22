@@ -40,6 +40,7 @@
 #include "G4LogicalVolume.hh"
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4tgbGeometryDumper.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -58,14 +59,15 @@ B1RunAction::~B1RunAction()
 
 void B1RunAction::BeginOfRunAction(const G4Run *)
 {
-  if (IsMaster())
-    G4tgbGeometryDumper::GetInstance()->DumpGeometry("geom.txt"); // Dump the geometry to a text file
+
+  G4tgbGeometryDumper::GetInstance()->DumpGeometry("geom.txt"); // Dump the geometry to a text file
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void B1RunAction::EndOfRunAction(const G4Run *run)
 {
+
   G4int nofEvents = run->GetNumberOfEvent();
   G4cout
       << G4endl

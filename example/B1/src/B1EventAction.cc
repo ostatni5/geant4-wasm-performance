@@ -36,28 +36,30 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-B1EventAction::B1EventAction(B1RunAction* runAction)
-: G4UserEventAction(),
-  fRunAction(runAction)
-{} 
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-B1EventAction::~B1EventAction()
-{}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void B1EventAction::BeginOfEventAction(const G4Event*)
-{    
+B1EventAction::B1EventAction(B1RunAction *runAction)
+    : G4UserEventAction(),
+      fRunAction(runAction)
+{
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void B1EventAction::EndOfEventAction(const G4Event*)
-{   
+B1EventAction::~B1EventAction()
+{
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void B1EventAction::BeginOfEventAction(const G4Event *)
+{
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void B1EventAction::EndOfEventAction(const G4Event *)
+{
     // print event number
-    G4cout << "Event: " << G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID() << G4endl;
+    // G4cout << "Event: " << G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID() << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
