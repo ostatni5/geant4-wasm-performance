@@ -14,9 +14,9 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument("--n_threads", type=int, default=4)
 
-parser.add_argument("--x_bins", type=int, default=1)
+parser.add_argument("--x_bins", type=int, default=10)
 parser.add_argument("--y_bins", type=int, default=1)
-parser.add_argument("--z_bins", type=int, default=10)
+parser.add_argument("--z_bins", type=int, default=1)
 parser.add_argument("--beam_on", type=int, default=100_000)
 
 parser.add_argument("--seed", type=int, default=1234)
@@ -177,16 +177,16 @@ async def with_memory_logging(name, process_name, fn):
 
 
 async def run():
-    await with_memory_logging(
-        "firefox",
-        "firefox",
-        lambda: execute_test(create_firefox_driver(), "Firefox"),
-    )
-    await with_memory_logging(
-        "chromium",
-        "chrome",
-        lambda: execute_test(create_chromium_driver(), "Chromium"),
-    )
+    # await with_memory_logging(
+    #     "firefox",
+    #     "firefox",
+    #     lambda: execute_test(create_firefox_driver(), "Firefox"),
+    # )
+    # await with_memory_logging(
+    #     "chromium",
+    #     "chrome",
+    #     lambda: execute_test(create_chromium_driver(), "Chromium"),
+    # )
     await with_memory_logging(
         "native",
         "exampleB1",

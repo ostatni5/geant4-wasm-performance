@@ -22,6 +22,11 @@ def create_input(xBin, yBin, zBin, beamOn):
 /gps/energy 60 MeV
 /gps/direction 0. 0. 1.
 /gps/position 0. 0. -2 cm
+/gps/pos/type Beam
+/gps/pos/radius 0. mm
+/gps/pos/sigma_x 1 mm
+/gps/pos/sigma_y 1 mm
+/gps/ang/type beam2d
 
 /run/beamOn {beamOn}
 
