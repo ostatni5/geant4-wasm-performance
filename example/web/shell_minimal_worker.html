@@ -73,6 +73,7 @@
       const endWorkers = performance.now();
 
 
+      const input = emscriptenInputConfig.value || window.INPUT_FILE;
 
 
       console.log(`Runtime initialized`);
@@ -82,7 +83,7 @@
         const worker = await workerPromise;
         console.log(`Worker ${index}-${i} is ready`);
 
-        worker.postMessage({ seed: window.SEED, input: emscriptenInputConfig.value, type: 'run', nWorkers: window.N_WORKERS })
+        worker.postMessage({ seed: window.SEED, input, type: 'run', nWorkers: window.N_WORKERS })
 
         worker.onmessage = function (e) {
           switch (e.data.type) {
@@ -112,7 +113,12 @@
         const times = results.map(a => a['value']['times']);
         const end = performance.now();
         const total = end - start;
-        resolve({ "time": time, times, "files": files, "total": total, "workers": window.N_WORKERS, "workersInit": endWorkers - startWorkers });
+        console.log(`Total time: ${total}`);
+        const res = { "time": time, times, "files": files, "total": total, "workers": window.N_WORKERS, "workersInit": endWorkers - startWorkers };
+        window.res = res;
+
+        resolve(res);
+        //alert(`Total time: ${total}`);
       })
 
     })

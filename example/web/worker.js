@@ -57,7 +57,7 @@ importScripts("../B1/build/wasm/exampleB1.js")
 
 
 const writeFile = (data) => {
-    const useCustomInput = data && 'input' in data && data.input.length > 0;
+    const useCustomInput = data && 'input' in data && data.input && data.input.length > 0;
     const inputFileName = 'example.in';
     const nWorkers = data.nWorkers ?? 1;
 
@@ -77,17 +77,20 @@ const writeFile = (data) => {
 
     //  replace line in file /run/beamOn N with /run/beamOn N/4
     const beamOnLine = lines.find(line => line.includes('/run/beamOn'));
+    console.log('beamOnLine', beamOnLine);
     const beamOn = beamOnLine.split(' ')[1];
+    console.log('beamOn', beamOnLine.split(' '));
+    console.log('beamOn', beamOn);
     const newBeamOn = Math.floor(beamOn / nWorkers);
     const newInputFile = inputFile.replace(beamOnLine, `/run/beamOn ${newBeamOn}`);
     console.log('newInputFile', newInputFile);
 
     FS.writeFile(inputFileName, newInputFile);
 
-    const preInit = performance.now()
+    const preInit = Date.now()
     console.log('init');
     Module.init(data.seed, data.nWorkers);
-    const preRun = performance.now()
+    const preRun = Date.now()
 
     console.log('run');
     const fullTime = Module.run(inputFileName);
@@ -95,9 +98,11 @@ const writeFile = (data) => {
     const resultFiles = resultFileNames.map(fileName => ({ name: fileName, content: FS.readFile(fileName, { encoding: 'utf8' }) }));
 
 
-    const preClear = performance.now()
+    const preClear = Date.now()
     console.log('clear');
     Module.clear();
+
+    const end = Date.now()
 
     postMessage({
         type: 'result', data: {
@@ -107,7 +112,8 @@ const writeFile = (data) => {
                 preRun,
                 run: preClear - preRun,
                 preClear,
-                clear: performance.now() - preClear
+                clear: end - preClear,
+                end
             }
         }
     });

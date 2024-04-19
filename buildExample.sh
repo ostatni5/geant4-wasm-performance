@@ -33,7 +33,7 @@ build_wasm () {
     cd ./build/wasm
 
     Geant4_DIR=../../../../geant4/wasm/geant4.10.04.p03/install/lib/Geant4-10.4.3
-    Geant4_DIR_ABS="$(dirname $(readlink -e $Geant4_DIR))/$(basename $Geant4_DIR)"
+    Geant4_DIR_ABS="$(cd "$(dirname "$Geant4_DIR")"; pwd -P)/$(basename "$Geant4_DIR")"
 
     source ../../../../emsdk/emsdk_env.sh
     source ../../../../geant4/wasm/geant4.10.04.p03/install/bin/geant4.sh
@@ -44,7 +44,7 @@ build_wasm () {
 }
 
 build_native & 
-build_wasm & 
+build_wasm &
 build_native_multithread &
 wait
 
