@@ -6,4 +6,4 @@ cd ./test-python
 
 source ./.venv/bin/activate
 
-python3 test.py --n_threads=1
+python3 test.py 

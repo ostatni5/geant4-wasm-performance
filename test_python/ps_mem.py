@@ -111,7 +111,7 @@ class Unbuffered(io.TextIOBase):
         super(Unbuffered, self).__init__()
         self.stream = stream
 
-    def write(self, data):
+    def write(self, data):  # type: ignore
         self.stream.write(data)
         self.stream.flush()
 

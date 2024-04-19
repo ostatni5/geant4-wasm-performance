@@ -1,6 +1,5 @@
-from selenium import webdriver
 import subprocess
-from selenium.webdriver import FirefoxOptions, ChromeOptions
+
 import os
 import time
 import math
@@ -8,15 +7,16 @@ import asyncio
 import shlex
 import json
 from input import create_input, save_input_file
+from selenium_utils import create_firefox_driver, create_chromium_driver
 
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
 parser.add_argument("--n_threads", type=int, default=4)
 
-parser.add_argument("--x_bins", type=int, default=10)
-parser.add_argument("--y_bins", type=int, default=1)
-parser.add_argument("--z_bins", type=int, default=1)
+parser.add_argument("--x_bins", type=int, default=100)
+parser.add_argument("--y_bins", type=int, default=100)
+parser.add_argument("--z_bins", type=int, default=100)
 parser.add_argument("--beam_on", type=int, default=100_000)
 
 parser.add_argument("--seed", type=int, default=1234)
@@ -40,20 +40,6 @@ os.makedirs("output", exist_ok=True)
 
 with open("./output/config.txt", "w") as f:
     f.write(json.dumps(vars(ns)))
-
-
-def create_firefox_driver():
-    opts = FirefoxOptions()
-    opts.add_argument("--headless")
-    driver = webdriver.Firefox(options=opts)
-    return driver
-
-
-def create_chromium_driver():
-    opts = ChromeOptions()
-    opts.add_argument("--headless")
-    driver = webdriver.Chrome(options=opts)
-    return driver
 
 
 def native_test(name="native", n_threads=1, n_workers=1, memory_file=None):
@@ -177,16 +163,16 @@ async def with_memory_logging(name, process_name, fn):
 
 
 async def run():
-    # await with_memory_logging(
-    #     "firefox",
-    #     "firefox",
-    #     lambda: execute_test(create_firefox_driver(), "Firefox"),
-    # )
-    # await with_memory_logging(
-    #     "chromium",
-    #     "chrome",
-    #     lambda: execute_test(create_chromium_driver(), "Chromium"),
-    # )
+    await with_memory_logging(
+        "firefox",
+        "firefox",
+        lambda: execute_test(create_firefox_driver(), "Firefox"),
+    )
+    await with_memory_logging(
+        "chromium",
+        "chrome",
+        lambda: execute_test(create_chromium_driver(), "Chromium"),
+    )
     await with_memory_logging(
         "native",
         "exampleB1",
