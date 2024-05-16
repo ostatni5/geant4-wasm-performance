@@ -30,7 +30,8 @@
 
 
   <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
-  <script>
+  <script src="../B1/build/wasm/exampleB1.js"></script>
+  <script type="module">
     window.SEED = 22226666;
     window.N_WORKERS = 1;
     function saveAsFile(content, fileName) {
@@ -42,9 +43,24 @@
     const emscriptenInputConfig = document.querySelector('#emscriptenInputConfig');
     let index = 0;
 
+    class PromiseQueue {
+      queue = Promise.resolve(true)
 
-    const initWorkers = () => new Array(N_WORKERS).fill(0).map((_, i) => new Promise((resolve) => {
+      add(operation) {
+        return new Promise((resolve, reject) => {
+          this.queue = this.queue
+            .then(operation)
+            .then(resolve)
+            .catch(reject)
+        })
+      }
+    }
+
+
+
+    const initWorkers2 = () => new Array(N_WORKERS).fill(0).map((_, i) => new Promise((resolve) => {
       const worker = new Worker("worker.js");
+      worker.postMessage({ type: 'module', module: compiledModule })
       worker.onmessage = function (e) {
         switch (e.data.type) {
           case 'event':
@@ -54,10 +70,50 @@
       }
     }))
 
+    const initWorkers = async () => {
+      const quque = new PromiseQueue();
+
+      const workers = []
+      for (let i = 0; i < window.N_WORKERS; i++) {
+        quque.add(() => new Promise((resolve) => {
+          const worker = new Worker("worker.js");
+          worker.postMessage({ type: 'module', module: compiledModule })
+          worker.onmessage = function (e) {
+            switch (e.data.type) {
+              case 'event':
+                if (e.data.data === "onRuntimeInitialized") {
+                  resolve(worker)
+                  workers.push(worker)
+                }
+            }
+          }
+        }))
+      }
+
+      await quque.queue;
+      return workers;
+    }
+
+    let compiledModule = null;
+
+
 
 
     const handleClick = () => new Promise(async (resolve) => {
+
+      const timeStamps = [];
+
+      const startCompile = performance.now();
+      timeStamps.push(["startCompile", startCompile]);
+      await runCompile();
+      const endCompile = performance.now();
+      timeStamps.push(["endCompile", endCompile]);
+
+      console.log("Compiled");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       const start = performance.now();
+      timeStamps.push(["start", start]);
 
 
 
@@ -68,9 +124,11 @@
       console.log(`Waiting for runtime to be initialized...`);
 
       const startWorkers = performance.now();
-      let eagerWorkers = initWorkers(); //massive performance boost
+      timeStamps.push(["startWorkers", startWorkers]);
+      let eagerWorkers = await initWorkers2(); //massive performance boost
       await Promise.allSettled(eagerWorkers)
       const endWorkers = performance.now();
+      timeStamps.push(["endWorkers", endWorkers]);
 
 
       const input = emscriptenInputConfig.value || window.INPUT_FILE;
@@ -83,7 +141,9 @@
         const worker = await workerPromise;
         console.log(`Worker ${index}-${i} is ready`);
 
+
         worker.postMessage({ seed: window.SEED, input, type: 'run', nWorkers: window.N_WORKERS })
+
 
         worker.onmessage = function (e) {
           switch (e.data.type) {
@@ -102,19 +162,27 @@
             case 'print':
               console.log(`Worker${index}-${i}:${e.data.data}`);
             default:
-            // console.log(`Worker ${index}: ${e.data.type} ${e.data.data}`);
+            //console.log(`Worker ${index}: ${e.data.type} ${e.data.data}`);
           }
         }
       }))).then((results) => {
         console.log(`All workers finished`);
-        console.log(results);
         const time = results.map(a => a['value']['time']);
         const files = results.map(a => a['value']['files']);
         const times = results.map(a => a['value']['times']);
+
         const end = performance.now();
+        timeStamps.push(["end", end]);
+
         const total = end - start;
         console.log(`Total time: ${total}`);
-        const res = { "time": time, times, "files": files, "total": total, "workers": window.N_WORKERS, "workersInit": endWorkers - startWorkers };
+        const res = {
+          "time": time, times,
+          "files": files, "total": total,
+          "workers": window.N_WORKERS, "workersInit": endWorkers - startWorkers,
+          "compile": endCompile - startCompile,
+          timeStamps, navigationTimestamp: window.performance.timing.navigationStart
+        };
         window.res = res;
 
         resolve(res);
@@ -132,6 +200,46 @@
     }
 
     window.runSimulation = handleClick;
+
+
+
+    window.runCompile = () => new Promise(resolve => {
+      if (compiledModule) {
+        return resolve("Compiled")
+      }
+
+      WebAssembly.compileStreaming(fetch("/example/B1/build/wasm/exampleB1.wasm")).then((mod) => {
+        compiledModule = mod;
+        resolve("Compiled")
+      }
+      );
+    })
+
+
+
+    const preModule = {
+      preRun: [],
+      postRun: [],
+      onRuntimeInitialized: function () {
+        console.log("onRuntimeInitialized");
+      },
+      instantiateWasm: function (info, receiveInstance) {
+        WebAssembly.instantiate(compiledModule, info).then(instance => {
+          receiveInstance(instance, compiledModule);
+        });
+
+        return {};
+      }
+    }
+
+    window.runPrecompiled = () => new Promise(resolve => {
+      createModule(preModule).then((mod) => {
+        console.log("Module created");
+        resolve("Module created")
+      });
+    })
+
+
   </script>
 
 

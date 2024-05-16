@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <script src="./index.js"></script>
+    <script>
+      window.run = async () => {
+        const timeStamps = await new Promise((resolve, reject) => {
+          const worker = new Worker("./worker.js");
+
+          worker.onmessage = function (e) {
+            switch (e.data.type) {
+              case "result":
+                resolve(e.data.data);
+                break;
+              default:
+                console.log("Unknown message type:", e.data.type);
+            }
+          };
+        });
+
+        return {
+          timeStamps,
+          navigationTimestamp: window.performance.timing.navigationStart,
+        };
+      };
+    </script>
+  </body>
+</html>

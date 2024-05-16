@@ -1,0 +1,1 @@
+When you allocate memory but don’t interact with it, the OS can virtually allocate memory without physically doing so. This concept is known as overcommitting. Only when you start to use the memory (i.e., write to it), will the memory pages get physically allocated.

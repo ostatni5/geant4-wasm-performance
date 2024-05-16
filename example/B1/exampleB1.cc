@@ -155,5 +155,3 @@ EMSCRIPTEN_BINDINGS(my_module)
   emscripten::function("clear", &clear);
 }
 #endif
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo.....

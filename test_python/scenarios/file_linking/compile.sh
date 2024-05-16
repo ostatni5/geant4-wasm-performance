@@ -1,0 +1,21 @@
+emcc main.cpp -o index.js -O3 \
+    -sMODULARIZE=1 \
+    -sEXPORT_NAME="createModule" \
+    -sENVIRONMENT=web \
+    -sMINIMAL_RUNTIME=2 \
+    -sEXPORT_KEEPALIVE=1 \
+    -sINITIAL_MEMORY=1000MB \
+    -sGL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=0 \
+    -sGL_SUPPORT_SIMPLE_ENABLE_EXTENSIONS=0 \
+    -sMINIMAL_RUNTIME_STREAMING_WASM_INSTANTIATION=1 \
+    -sERROR_ON_UNDEFINED_SYMBOLS=0 \
+    -sINVOKE_RUN=0 \
+    -sFORCE_FILESYSTEM=1 \
+    --use-preload-cache \
+    --preload-file ../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/G4ENSDFSTATE2.2@/data/G4ENSDFSTATE2.2 \
+    --preload-file ../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/PhotonEvaporation5.2@/data/PhotonEvaporation5.2 \
+    --preload-file ../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/G4EMLOW7.3/brem_SB@/data/G4EMLOW7.3/brem_SB \
+    --preload-file ../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/G4EMLOW7.3/livermore/phot_epics2014@/data/G4EMLOW7.3/livermore/phot_epics2014 \
+    --preload-file ../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/G4EMLOW7.3/livermore/rayl@/data/G4EMLOW7.3/livermore/rayl \
+    --preload-file ../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/G4SAIDDATA1.1@/data/G4SAIDDATA1.1 \
+    --preload-file ../../../geant4/wasm/geant4.10.04.p03/install/share/Geant4-10.4.3/data/G4NEUTRONXS1.4@/data/G4NEUTRONXS1.4

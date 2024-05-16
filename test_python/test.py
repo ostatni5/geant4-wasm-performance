@@ -12,26 +12,39 @@ from selenium_utils import create_firefox_driver, create_chromium_driver
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument("--n_threads", type=int, default=4)
+parser.add_argument("--n_threads", type=int, default=8)
 
 parser.add_argument("--x_bins", type=int, default=100)
 parser.add_argument("--y_bins", type=int, default=100)
 parser.add_argument("--z_bins", type=int, default=100)
 parser.add_argument("--beam_on", type=int, default=100_000)
+parser.add_argument(
+    "--test",
+    type=lambda x: x.split(" "),
+    nargs="+",
+    default="firefox chromium native",
+)
+parser.add_argument("--particle", type=str, default="proton")
+parser.add_argument("--verbose", type=bool, default=False)
 
 parser.add_argument("--seed", type=int, default=1234)
 
 ns = parser.parse_args()
-
+ns.test = list(set(ns.test[0]))
 result_file_names = []
 
 SEED = ns.seed
 N_THREADS = ns.n_threads
 MEMORY_LOGGING_TIMEOUT = 0.05
-INPUT_FILE_CONTENT = create_input(ns.x_bins, ns.y_bins, ns.z_bins, ns.beam_on)
+INPUT_FILE_CONTENT = create_input(
+    ns.x_bins, ns.y_bins, ns.z_bins, ns.beam_on, ns.particle
+)
 
 
 def print(*args, **kwargs):
+    if not ns.verbose:
+        return
+
     __builtins__.print(*args, **kwargs)
 
 
@@ -75,7 +88,7 @@ def native_test(name="native", n_threads=1, n_workers=1, memory_file=None):
         threads.append(
             subprocess.Popen(
                 shlex.split(
-                    f'psrecord "./{exec_name} exampleB1.in {SEED + i} {n_threads}" --log ../../output/{memory_file}.usage.log --include-children'
+                    f'python3 ./../../psrecord.py "./{exec_name} exampleB1.in {SEED + i} {n_threads}" --log ../../output/{memory_file}.usage.log --include-children'
                 ),
                 cwd=tmp_path,
                 stdout=f,
@@ -99,17 +112,19 @@ def native_test(name="native", n_threads=1, n_workers=1, memory_file=None):
         print("No time.txt file found")
 
 
-def execute_test(driver, name):
+def execute_test(
+    driver, name, INPUT_FILE_CONTENT=INPUT_FILE_CONTENT, SEED=SEED, N_THREADS=N_THREADS
+):
     import subprocess
 
     log_name = name.lower()
     subprocess.Popen(
-        f"psrecord {driver.service.process.pid} --log ./output/{log_name}.usage.log --include-children".split(
+        f"python3 ./psrecord.py {driver.service.process.pid} --log ./output/{log_name}.usage.log --include-children".split(
             " "
         )
     )
 
-    driver.set_script_timeout(30)
+    driver.set_script_timeout(60)
     driver.get("http://127.0.0.1:5500/example/web/shell_minimal_worker.html")
     driver.execute_script(f"window.INPUT_FILE = `{INPUT_FILE_CONTENT}`;")
     driver.execute_script(f"window.SEED = {SEED};")
@@ -118,10 +133,11 @@ def execute_test(driver, name):
 
     driver.close()
 
-    print(name, result["time"])
-    print(result["total"])
-    print(name, result["times"])
-    print(name, result["workersInit"])
+    print("Time", result["time"])
+    print("Total", result["total"])
+    print("times", result["times"])
+    print("workersInit", result["workersInit"])
+    print("timestapms", result["timeStamps"])
 
     # files = result["files"]
     # # save files to disk
@@ -137,13 +153,13 @@ def execute_test(driver, name):
 
 
 async def with_memory_logging(name, process_name, fn):
-    try:
-        subprocess.run(["pgrep", process_name], check=True)
-        raise Exception(f"Process already running {process_name}")
-    except subprocess.CalledProcessError as e:
-        print(f"Process not running {process_name}")
-        if e.returncode != 1:
-            raise e
+    # try:
+    #     subprocess.run(["pgrep", process_name], check=True)
+    #     raise Exception(f"Process already running {process_name}")
+    # except subprocess.CalledProcessError as e:
+    #     print(f"Process not running {process_name}")
+    #     if e.returncode != 1:
+    #         raise e
 
     print(f"Running {name} test")
     # start memory logging
@@ -163,31 +179,40 @@ async def with_memory_logging(name, process_name, fn):
 
 
 async def run():
-    await with_memory_logging(
-        "firefox",
-        "firefox",
-        lambda: execute_test(create_firefox_driver(), "Firefox"),
-    )
-    await with_memory_logging(
-        "chromium",
-        "chrome",
-        lambda: execute_test(create_chromium_driver(), "Chromium"),
-    )
-    await with_memory_logging(
-        "native",
-        "exampleB1",
-        lambda: native_test(),
-    )
-    await with_memory_logging(
-        "native-multithread",
-        "exampleB1",
-        lambda: native_test("native-multithread", N_THREADS),
-    )
-    # await with_memory_logging(
-    #     "native-multiprocess",
-    #     "exampleB1",
-    #     lambda: native_test("native", 1, N_THREADS, memory_file="native-multiprocess"),
-    # )
+    print("Running tests")
+    print(ns.test)
+
+    if "firefox" in ns.test:
+        await with_memory_logging(
+            "firefox",
+            "firefox",
+            lambda: execute_test(create_firefox_driver(), "Firefox"),
+        )
+
+    if "chromium" in ns.test:
+        await with_memory_logging(
+            "chromium",
+            "chrome",
+            lambda: execute_test(create_chromium_driver(), "Chromium"),
+        )
+
+    if "native" in ns.test:
+        await with_memory_logging(
+            "native",
+            "exampleB1",
+            lambda: native_test(),
+        )
+
+        await with_memory_logging(
+            "native-multithread",
+            "exampleB1",
+            lambda: native_test("native-multithread", N_THREADS),
+        )
+        # await with_memory_logging(
+        #     "native-multiprocess",
+        #     "exampleB1",
+        #     lambda: native_test("native", 1, N_THREADS, memory_file="native-multiprocess"),
+        # )
 
 
 async def main():

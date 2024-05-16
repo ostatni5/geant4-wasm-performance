@@ -1,5 +1,6 @@
 import platform
 import psutil
+import os
 
 
 def get_size(bytes, suffix="B"):
@@ -45,11 +46,21 @@ def print_info():
     print(f"Available: {get_size(svmem.available)}")
     print(f"Used: {get_size(svmem.used)}")
     print(f"Percentage: {svmem.percent}%")
+    print("=" * 90)
 
-    print("=" * 20, "SWAP", "=" * 20)
-    # get the swap memory details (if exists)
-    swap = psutil.swap_memory()
-    print(f"Total: {get_size(swap.total)}")
-    print(f"Free: {get_size(swap.free)}")
-    print(f"Used: {get_size(swap.used)}")
-    print(f"Percentage: {swap.percent}%")
+
+def change_pwd_to_script_location(file: str):
+    """
+    Usage:
+    ```python
+    change_pwd_to_script_location(__file__)
+    ```
+    """
+
+    script_path = os.path.abspath(file)
+
+    # Get the directory of the script:
+    script_dir = os.path.dirname(script_path)
+
+    # Change the working directory:
+    os.chdir(script_dir)

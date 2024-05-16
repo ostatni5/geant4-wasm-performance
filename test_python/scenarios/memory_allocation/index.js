@@ -1,0 +1,176 @@
+/** @nocollapse */ var createModule = function (moduleArg = {}) {
+  var moduleRtn;
+
+  var Module = moduleArg;
+  var readyPromiseResolve, readyPromiseReject;
+  var readyPromise = new Promise((resolve, reject) => {
+    readyPromiseResolve = resolve;
+    readyPromiseReject = reject;
+  });
+  var out = (text) => console.log(text);
+  var err = (text) => console.error(text);
+  function ready() {
+    readyPromiseResolve(Module);
+  }
+  function abort(what) {
+    throw what;
+  }
+  var HEAP8,
+    HEAP16,
+    HEAP32,
+    HEAPU8,
+    HEAPU16,
+    HEAPU32,
+    HEAPF32,
+    HEAPF64,
+    wasmMemory;
+  function updateMemoryViews() {
+    var b = wasmMemory.buffer;
+    HEAP8 = new Int8Array(b);
+    HEAP16 = new Int16Array(b);
+    HEAPU8 = new Uint8Array(b);
+    HEAPU16 = new Uint16Array(b);
+    HEAP32 = new Int32Array(b);
+    HEAPU32 = new Uint32Array(b);
+    HEAPF32 = new Float32Array(b);
+    HEAPF64 = new Float64Array(b);
+  }
+  var noExitRuntime = Module["noExitRuntime"] || true;
+  var __abort_js = () => {
+    abort("");
+  };
+  var __emscripten_memcpy_js = (dest, src, num) =>
+    HEAPU8.copyWithin(dest, src, src + num);
+  var _emscripten_get_now;
+  _emscripten_get_now = () => performance.now();
+  var getHeapMax = () => 2147483648;
+  var growMemory = (size) => {
+    var b = wasmMemory.buffer;
+    var pages = (size - b.byteLength + 65535) / 65536;
+    try {
+      wasmMemory.grow(pages);
+      updateMemoryViews();
+      return 1;
+    } catch (e) {}
+  };
+  var _emscripten_resize_heap = (requestedSize) => {
+    var oldSize = HEAPU8.length;
+    requestedSize >>>= 0;
+    var maxHeapSize = getHeapMax();
+    if (requestedSize > maxHeapSize) {
+      return false;
+    }
+    var alignUp = (x, multiple) => x + ((multiple - (x % multiple)) % multiple);
+    for (var cutDown = 1; cutDown <= 4; cutDown *= 2) {
+      var overGrownHeapSize = oldSize * (1 + 0.2 / cutDown);
+      overGrownHeapSize = Math.min(
+        overGrownHeapSize,
+        requestedSize + 100663296
+      );
+      var newSize = Math.min(
+        maxHeapSize,
+        alignUp(Math.max(requestedSize, overGrownHeapSize), 65536)
+      );
+      var replacement = growMemory(newSize);
+      if (replacement) {
+        return true;
+      }
+    }
+    return false;
+  };
+  var printCharBuffers = [null, [], []];
+  var UTF8Decoder =
+    typeof TextDecoder != "undefined" ? new TextDecoder("utf8") : undefined;
+  var UTF8ArrayToString = (heapOrArray, idx, maxBytesToRead) => {
+    var endIdx = idx + maxBytesToRead;
+    var endPtr = idx;
+    while (heapOrArray[endPtr] && !(endPtr >= endIdx)) ++endPtr;
+    if (endPtr - idx > 16 && heapOrArray.buffer && UTF8Decoder) {
+      return UTF8Decoder.decode(heapOrArray.subarray(idx, endPtr));
+    }
+    var str = "";
+    while (idx < endPtr) {
+      var u0 = heapOrArray[idx++];
+      if (!(u0 & 128)) {
+        str += String.fromCharCode(u0);
+        continue;
+      }
+      var u1 = heapOrArray[idx++] & 63;
+      if ((u0 & 224) == 192) {
+        str += String.fromCharCode(((u0 & 31) << 6) | u1);
+        continue;
+      }
+      var u2 = heapOrArray[idx++] & 63;
+      if ((u0 & 240) == 224) {
+        u0 = ((u0 & 15) << 12) | (u1 << 6) | u2;
+      } else {
+        u0 =
+          ((u0 & 7) << 18) | (u1 << 12) | (u2 << 6) | (heapOrArray[idx++] & 63);
+      }
+      if (u0 < 65536) {
+        str += String.fromCharCode(u0);
+      } else {
+        var ch = u0 - 65536;
+        str += String.fromCharCode(55296 | (ch >> 10), 56320 | (ch & 1023));
+      }
+    }
+    return str;
+  };
+  var printChar = (stream, curr) => {
+    var buffer = printCharBuffers[stream];
+    if (curr === 0 || curr === 10) {
+      (stream === 1 ? out : err)(UTF8ArrayToString(buffer, 0));
+      buffer.length = 0;
+    } else {
+      buffer.push(curr);
+    }
+  };
+  var _fd_write = (fd, iov, iovcnt, pnum) => {
+    var num = 0;
+    for (var i = 0; i < iovcnt; i++) {
+      var ptr = HEAPU32[iov >> 2];
+      var len = HEAPU32[(iov + 4) >> 2];
+      iov += 8;
+      for (var j = 0; j < len; j++) {
+        printChar(fd, HEAPU8[ptr + j]);
+      }
+      num += len;
+    }
+    HEAPU32[pnum >> 2] = num;
+    return 0;
+  };
+  var wasmImports = {
+    c: __abort_js,
+    e: __emscripten_memcpy_js,
+    b: _emscripten_get_now,
+    d: _emscripten_resize_heap,
+    a: _fd_write,
+  };
+  function initRuntime(wasmExports) {
+    wasmExports["g"]();
+  }
+  var _main,
+    __emscripten_stack_restore,
+    __emscripten_stack_alloc,
+    _emscripten_stack_get_current,
+    dynCall_jiji;
+  var imports = { a: wasmImports };
+  (WebAssembly.instantiateStreaming
+    ? WebAssembly.instantiateStreaming(fetch("build/index.wasm"), imports)
+    : WebAssembly.instantiate(Module["wasm"], imports)
+  ).then((output) => {
+    var wasmExports = (output.instance || output).exports;
+    Module["_main"] = _main = wasmExports["h"];
+    __emscripten_stack_restore = wasmExports["j"];
+    __emscripten_stack_alloc = wasmExports["k"];
+    _emscripten_stack_get_current = wasmExports["l"];
+    dynCall_jiji = wasmExports["m"];
+    wasmMemory = wasmExports["f"];
+    updateMemoryViews();
+    initRuntime(wasmExports);
+    ready();
+  });
+  moduleRtn = readyPromise;
+
+  return moduleRtn;
+};

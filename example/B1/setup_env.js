@@ -1,5 +1,5 @@
-Module.arguments = ['exampleB1.in'];
-Module.preRun.push(function () {
+Module['arguments'] = ['exampleB1.in'];
+Module['preRun'].push(function () {
     ENV.G4LEDATA = '/data/G4EMLOW7.3';
     ENV.G4LEVELGAMMADATA = '/data/PhotonEvaporation5.2';
     ENV.G4NEUTRONXSDATA = '/data/G4NEUTRONXS1.4';

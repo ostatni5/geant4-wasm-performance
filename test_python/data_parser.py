@@ -1,10 +1,10 @@
 import re
 import json
+from tracemalloc import start
 
 
 def extract_data(file_path):
     metadata = {}
-    time_ram_pairs = [(0, 0)]
 
     with open(file_path, "r") as file:
         lines = file.readlines()
@@ -13,15 +13,20 @@ def extract_data(file_path):
 
     def convert_to_tuple(line):
         values = line.split()
-        return (float(values[0]), float(values[2]))
+        try:
+            return (float(values[1]), float(values[3]))
+        except:
+            print("Error parsing line", line, file_path)
+            raise ValueError
 
     time_data_tuples = [convert_to_tuple(line) for line in lines]
     max_usage = max([pair[1] for pair in time_data_tuples])
+    start_time = float(lines[0].split()[0])
 
-    return metadata, time_data_tuples, max_usage
+    return metadata, time_data_tuples, max_usage, start_time
 
 
-def extract_time(file_path):
+def extract_time(file_path) -> tuple[float, dict]:
     with open(file_path, "r") as file:
         lines = file.readlines()
 

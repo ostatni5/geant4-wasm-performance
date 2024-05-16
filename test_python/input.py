@@ -1,4 +1,4 @@
-def create_input(xBin, yBin, zBin, beamOn):
+def create_input(xBin=1, yBin=1, zBin=1, beamOn=1, particle="proton"):
     return f"""
 /process/em/verbose 0
 /control/verbose 0
@@ -18,14 +18,14 @@ def create_input(xBin, yBin, zBin, beamOn):
 
 /run/initialize
 
-/gps/particle proton
+/gps/particle {particle}
 /gps/energy 60 MeV
 /gps/direction 0. 0. 1.
 /gps/position 0. 0. -2 cm
 /gps/pos/type Beam
-/gps/pos/radius 1 cm
-/gps/pos/sigma_x 2 cm
-/gps/pos/sigma_y 2 cm
+/gps/pos/radius 0.5 cm
+/gps/pos/sigma_x 0.5 cm
+/gps/pos/sigma_y 0.5 cm
 /gps/ang/type beam2d
 
 /run/beamOn {beamOn}
