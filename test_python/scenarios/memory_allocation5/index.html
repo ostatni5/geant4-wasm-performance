@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-us">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simple Wasm Test</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <script src="./index.js"></script>
     <script>
       window.run = async () => {
         const timeStamps = await new Promise((resolve, reject) => {
@@ -26,7 +27,5 @@
         };
       };
     </script>
-  </head>
-
-  <body></body>
+  </body>
 </html>

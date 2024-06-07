@@ -33,7 +33,7 @@ G4RunManager *runManager;
 
 G4UImanager *UImanager;
 
-void init(long seed, int nThreads = 1)
+double init(long seed, int nThreads = 1)
 {
   auto t1 = std::chrono::system_clock::now();
 
@@ -82,10 +82,7 @@ void init(long seed, int nThreads = 1)
 
   G4cout << "init: " << ms_double << "ms\n";
 
-  std::ofstream myfile;
-  myfile.open("time.txt");
-  myfile << "init," << ms_double << "\n";
-  myfile.close();
+  return ms_double;
 }
 
 double run(std::string name)
@@ -106,19 +103,13 @@ double run(std::string name)
 
   auto t2 = std::chrono::system_clock::now();
 
-  double ms_double = (t2 - t1).count() / 1000000;
+  double ms_double = (t2 - t1).count() / 1000000.0;
 
   G4cout << "run: " << ms_double << "ms\n";
 
   std::time_t end_time = std::chrono::system_clock::to_time_t(t2);
 
   G4cout << "finished computation at " << std::ctime(&end_time) << "elapsed time: " << ms_double << "ms" << G4endl;
-
-  // write time to file
-  std::ofstream myfile;
-  myfile.open("time.txt");
-  myfile << "run," << ms_double << "\n";
-  myfile.close();
 
   return ms_double;
 }
@@ -141,9 +132,23 @@ int main(int argc, char **argv)
   long seed = argv[2] ? std::stol(argv[2]) : 1234;
   int nThreads = argv[3] ? std::stol(argv[3]) : 1;
 
-  init(seed, nThreads);
-  run(name);
+  auto t1 = std::chrono::system_clock::now();
+  double init_time = init(seed, nThreads);
+  double run_time = run(name);
   clear();
+
+  auto t2 = std::chrono::system_clock::now();
+
+  double ms_double = (t2 - t1).count() / 1000.0;
+
+  // write time to file
+  std::ofstream myfile;
+  myfile.open("time.txt");
+  myfile << "start," << t1.time_since_epoch().count() << "\n";
+  myfile << "total," << ms_double << "\n";
+  myfile << "init," << init_time << "\n";
+  myfile << "run," << run_time << "\n";
+  myfile.close();
 }
 #endif
 

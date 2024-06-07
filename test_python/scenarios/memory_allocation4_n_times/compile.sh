@@ -1,4 +1,4 @@
-emcc main.cpp -o index.js -O3 \
+emcc main.cpp -o build/index.js -O3 \
     -sMODULARIZE=1 \
     -sEXPORT_NAME="createModule" \
     -sENVIRONMENT=web \
@@ -11,5 +11,3 @@ emcc main.cpp -o index.js -O3 \
     -sERROR_ON_UNDEFINED_SYMBOLS=0 \
     -sINVOKE_RUN=0 \
 
-g++ main.cpp -o build/index -O3 -std=c++11
-psrecord ./build/index --log native.log --plot native.png >> /dev/null

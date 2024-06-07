@@ -6,10 +6,18 @@ import math
 import asyncio
 import shlex
 import json
+from typing import Dict
+
+from matplotlib.dates import SA
 from input import create_input, save_input_file
 from selenium_utils import create_firefox_driver, create_chromium_driver
 
 from argparse import ArgumentParser
+
+from dotenv import dotenv_values
+
+env_values: Dict[str, str] = dotenv_values() | os.environ.copy()  # type: ignore
+
 
 parser = ArgumentParser()
 parser.add_argument("--n_threads", type=int, default=8)
@@ -20,25 +28,31 @@ parser.add_argument("--z_bins", type=int, default=100)
 parser.add_argument("--beam_on", type=int, default=100_000)
 parser.add_argument(
     "--test",
-    type=lambda x: x.split(" "),
-    nargs="+",
-    default="firefox chromium native",
+    action="store",
+    type=str,
+    nargs="*",
+    default=["firefox", "chromium", "native"],
 )
 parser.add_argument("--particle", type=str, default="proton")
 parser.add_argument("--verbose", type=bool, default=False)
+parser.add_argument("--init_mode", type=str, default="queue")
+parser.add_argument("--save-results", type=bool, default=False)
 
 parser.add_argument("--seed", type=int, default=1234)
+parser.add_argument("--output", type=str, default="./output")
 
 ns = parser.parse_args()
-ns.test = list(set(ns.test[0]))
-result_file_names = []
+result_file_names = ["eDep.txt"]
 
 SEED = ns.seed
 N_THREADS = ns.n_threads
+INIT_MODE = ns.init_mode
 MEMORY_LOGGING_TIMEOUT = 0.05
 INPUT_FILE_CONTENT = create_input(
     ns.x_bins, ns.y_bins, ns.z_bins, ns.beam_on, ns.particle
 )
+OUTPUT_FOLDER = ns.output
+SAVE_RESULTS = ns.save_results
 
 
 def print(*args, **kwargs):
@@ -49,9 +63,9 @@ def print(*args, **kwargs):
 
 
 # crate output folder
-os.makedirs("output", exist_ok=True)
+os.makedirs(f"{OUTPUT_FOLDER}/", exist_ok=True)
 
-with open("./output/config.txt", "w") as f:
+with open(f"{OUTPUT_FOLDER}/config.txt", "w") as f:
     f.write(json.dumps(vars(ns)))
 
 
@@ -88,10 +102,11 @@ def native_test(name="native", n_threads=1, n_workers=1, memory_file=None):
         threads.append(
             subprocess.Popen(
                 shlex.split(
-                    f'python3 ./../../psrecord.py "./{exec_name} exampleB1.in {SEED + i} {n_threads}" --log ../../output/{memory_file}.usage.log --include-children'
+                    f'python3 ./../../psrecord.py "./{exec_name} exampleB1.in {SEED + i} {n_threads}" --log ../.{OUTPUT_FOLDER}/{memory_file}.usage.log --plot ../.{OUTPUT_FOLDER}/{memory_file}.usage.png  --include-children'
                 ),
                 cwd=tmp_path,
                 stdout=f,
+                env=env_values,
             )
         )
 
@@ -101,36 +116,53 @@ def native_test(name="native", n_threads=1, n_workers=1, memory_file=None):
     # copy result files to output folder
 
     for file in result_file_names:
-        os.system(f"cp {tmp_path}/{file} ./output/{name}-{file}")
+        os.system(f"cp {tmp_path}/{file} {OUTPUT_FOLDER}/{name}-{file}")
 
     # read time from time.txt
+
+    res_dict = {
+        "times": [],
+        "total": 0,
+    }
+
     try:
         with open(time_path, "r") as f:
-            time = f.read()
-            print(f"{name}", time)
+            start = int(f.readline().split(",")[1].replace("\n", "")) / 1000
+            total_time = float(f.readline().split(",")[1].replace("\n", ""))
+            run_time = float(f.readline().split(",")[1].replace("\n", ""))
+            init_time = float(f.readline().split(",")[1].replace("\n", ""))
+            print(f"{name}", total_time)
+            res_dict["times"].append({"run": run_time, "init": init_time})
+            res_dict["total"] = total_time
+            res_dict["start"] = start
     except:
         print("No time.txt file found")
+
+    return res_dict
 
 
 def execute_test(
     driver, name, INPUT_FILE_CONTENT=INPUT_FILE_CONTENT, SEED=SEED, N_THREADS=N_THREADS
 ):
-    import subprocess
 
     log_name = name.lower()
     subprocess.Popen(
-        f"python3 ./psrecord.py {driver.service.process.pid} --log ./output/{log_name}.usage.log --include-children".split(
+        f"python3 ./psrecord.py {driver.service.process.pid} --log {OUTPUT_FOLDER}/{log_name}.usage.log --plot {OUTPUT_FOLDER}/{log_name}.usage.png --include-children".split(
             " "
         )
     )
 
-    driver.set_script_timeout(60)
+    driver.set_script_timeout(60 * 5)
+    time.sleep(2)
     driver.get("http://127.0.0.1:5500/example/web/shell_minimal_worker.html")
+    driver.execute_script(f"window.INIT_MODE = `{INIT_MODE}`;")
     driver.execute_script(f"window.INPUT_FILE = `{INPUT_FILE_CONTENT}`;")
     driver.execute_script(f"window.SEED = {SEED};")
     driver.execute_script(f"window.N_WORKERS = {N_THREADS};")
+    driver.execute_script(f"window.RETURN_FILES = {str(SAVE_RESULTS).lower()};")
     result = driver.execute_script("return window.runSimulation();")
 
+    time.sleep(2)
     driver.close()
 
     print("Time", result["time"])
@@ -139,28 +171,16 @@ def execute_test(
     print("workersInit", result["workersInit"])
     print("timestapms", result["timeStamps"])
 
-    # files = result["files"]
-    # # save files to disk
-    # for file in files:
-    #     path = f"./output/{name}-{file['name']}"
-    #     with open(path, "w") as f:
-    #         f.write(file["content"])
-    #     print(f"File saved to {path}")
+    if SAVE_RESULTS:
+        for n in range(N_THREADS):
+            for file in result["files"][n]:
+                with open(f"{OUTPUT_FOLDER}/{log_name}-{n}-{file['name']}", "w") as f:
+                    f.write(file["content"])
 
-    # global result_file_names
-    # result_file_names = [file["name"] for file in files]
     return result
 
 
 async def with_memory_logging(name, process_name, fn):
-    # try:
-    #     subprocess.run(["pgrep", process_name], check=True)
-    #     raise Exception(f"Process already running {process_name}")
-    # except subprocess.CalledProcessError as e:
-    #     print(f"Process not running {process_name}")
-    #     if e.returncode != 1:
-    #         raise e
-
     print(f"Running {name} test")
     # start memory logging
     time_start = time.time()
@@ -170,7 +190,7 @@ async def with_memory_logging(name, process_name, fn):
     time_end = time.time()
     print(f"Finished {name} test {math.ceil((time_end - time_start) * 1000)} ms")
     # write time to file
-    with open(f"./output/{name}.time.log", "w") as f:
+    with open(f"{OUTPUT_FOLDER}/{name}.time.log", "w") as f:
         f.write(f"{time_end - time_start}")
         f.write("\n")
         if result:
@@ -181,6 +201,8 @@ async def with_memory_logging(name, process_name, fn):
 async def run():
     print("Running tests")
     print(ns.test)
+
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
     if "firefox" in ns.test:
         await with_memory_logging(
@@ -197,16 +219,17 @@ async def run():
         )
 
     if "native" in ns.test:
-        await with_memory_logging(
-            "native",
-            "exampleB1",
-            lambda: native_test(),
-        )
+        if N_THREADS == 1:
+            await with_memory_logging(
+                "native",
+                "exampleB1",
+                lambda: native_test(),
+            )
 
         await with_memory_logging(
             "native-multithread",
             "exampleB1",
-            lambda: native_test("native-multithread", N_THREADS),
+            lambda: native_test("native-multithread", n_threads=N_THREADS),
         )
         # await with_memory_logging(
         #     "native-multiprocess",
@@ -216,7 +239,7 @@ async def run():
 
 
 async def main():
-    map(lambda x: os.system(f"pkill -9 {x}"), ["chrome", "firefox", "exampleB1"])
+    # map(lambda x: os.system(f"pkill -9 {x}"), ["chrome", "firefox", "exampleB1"])
     await run()
 
 

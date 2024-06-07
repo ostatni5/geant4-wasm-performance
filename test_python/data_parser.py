@@ -1,6 +1,5 @@
-import re
 import json
-from tracemalloc import start
+import pandas as pd
 
 
 def extract_data(file_path):
@@ -36,3 +35,19 @@ def extract_time(file_path) -> tuple[float, dict]:
         result = json.loads(lines[1])
 
     return float(lines[0]), result
+
+
+# convert this kind of data to df from file
+# Timestamp   Elapsed time   CPU (%)     Real (MB)   Virtual (MB)
+# 1716033718.286        0.000        0.000      338.922  3284499.703
+def usage_data_from_file(file):
+    df = pd.read_csv(file, delim_whitespace=True, skiprows=1, header=None)
+
+    # set headers
+    df.columns = ["Timestamp", "Time", "CPU", "Memory", "Memory_Virtual"]
+    # print(df)
+    common = {
+        "start_time": df["Timestamp"].iloc[0],
+        "max_memory": df["Memory"].max(),
+    }
+    return df, common

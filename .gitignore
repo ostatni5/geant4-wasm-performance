@@ -10,3 +10,6 @@
 *.log
 
 .env
+
+**/.DS_Store
+test_python/.DS_Store

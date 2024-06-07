@@ -1,248 +1,265 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Geant4 in WebAssembly</title>
+  </head>
+  <style>
+    body {
+      font-family: "Courier New", Courier, monospace;
+    }
+  </style>
 
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>Geant4 in WebAssembly</title>
-</head>
-<style>
-  body {
-    font-family: 'Courier New', Courier, monospace;
-  }
-</style>
+  <body>
+    <main style="display: flex">
+      <section>
+        <h2>Simulation Config</h2>
+        <textarea
+          id="emscriptenInputConfig"
+          rows="30"
+          style="width: 400px; margin: 5px"
+        ></textarea>
+      </section>
 
-<body>
-
-  <main style="display:flex">
-    <section>
-      <h2>Simulation Config</h2>
-      <textarea id="emscriptenInputConfig" rows="30" style="width: 400px; margin: 5px;"></textarea>
-    </section>
-
-    <!-- <section>
+      <!-- <section>
     <h2>Detector Config</h2>
       <textarea id="emscriptenInputDetector" rows="30" style="width: 400px; margin: 5px;"></textarea>
     </section> -->
-  </main>
-  <br>
-  <button id="run">Run simulation</button>
+    </main>
+    <br />
+    <button id="run">Run simulation</button>
 
-
-  <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
-  <script src="../B1/build/wasm/exampleB1.js"></script>
-  <script type="module">
-    window.SEED = 22226666;
-    window.N_WORKERS = 1;
-    function saveAsFile(content, fileName) {
-      var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-      saveAs(blob, fileName);
-    }
-
-    const runButton = document.querySelector('#run');
-    const emscriptenInputConfig = document.querySelector('#emscriptenInputConfig');
-    let index = 0;
-
-    class PromiseQueue {
-      queue = Promise.resolve(true)
-
-      add(operation) {
-        return new Promise((resolve, reject) => {
-          this.queue = this.queue
-            .then(operation)
-            .then(resolve)
-            .catch(reject)
-        })
-      }
-    }
-
-
-
-    const initWorkers2 = () => new Array(N_WORKERS).fill(0).map((_, i) => new Promise((resolve) => {
-      const worker = new Worker("worker.js");
-      worker.postMessage({ type: 'module', module: compiledModule })
-      worker.onmessage = function (e) {
-        switch (e.data.type) {
-          case 'event':
-            if (e.data.data === "onRuntimeInitialized")
-              resolve(worker)
-        }
-      }
-    }))
-
-    const initWorkers = async () => {
-      const quque = new PromiseQueue();
-
-      const workers = []
-      for (let i = 0; i < window.N_WORKERS; i++) {
-        quque.add(() => new Promise((resolve) => {
-          const worker = new Worker("worker.js");
-          worker.postMessage({ type: 'module', module: compiledModule })
-          worker.onmessage = function (e) {
-            switch (e.data.type) {
-              case 'event':
-                if (e.data.data === "onRuntimeInitialized") {
-                  resolve(worker)
-                  workers.push(worker)
-                }
-            }
-          }
-        }))
+    <!-- <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script> -->
+    <script src="../B1/build/wasm/exampleB1.js"></script>
+    <script type="module">
+      window.SEED = 22226666;
+      window.N_WORKERS = 4;
+      window.INIT_MODE = "queue";
+      window.RETURN_FILES = false;
+      function saveAsFile(content, fileName) {
+        var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        saveAs(blob, fileName);
       }
 
-      await quque.queue;
-      return workers;
-    }
-
-    let compiledModule = null;
-
-
-
-
-    const handleClick = () => new Promise(async (resolve) => {
-
-      const timeStamps = [];
-
-      const startCompile = performance.now();
-      timeStamps.push(["startCompile", startCompile]);
-      await runCompile();
-      const endCompile = performance.now();
-      timeStamps.push(["endCompile", endCompile]);
-
-      console.log("Compiled");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const start = performance.now();
-      timeStamps.push(["start", start]);
-
-
-
-      index++;
-      console.log(`Run simulation ${index}`);
-      console.log(`Seed: ${window.SEED}`);
-      console.log(`Number of workers: ${window.N_WORKERS}`);
-      console.log(`Waiting for runtime to be initialized...`);
-
-      const startWorkers = performance.now();
-      timeStamps.push(["startWorkers", startWorkers]);
-      let eagerWorkers = await initWorkers2(); //massive performance boost
-      await Promise.allSettled(eagerWorkers)
-      const endWorkers = performance.now();
-      timeStamps.push(["endWorkers", endWorkers]);
-
-
-      const input = emscriptenInputConfig.value || window.INPUT_FILE;
-
-
-      console.log(`Runtime initialized`);
-
-      Promise.allSettled(eagerWorkers.map((workerPromise, i) => new Promise(async (resolve) => {
-
-        const worker = await workerPromise;
-        console.log(`Worker ${index}-${i} is ready`);
-
-
-        worker.postMessage({ seed: window.SEED, input, type: 'run', nWorkers: window.N_WORKERS })
-
-
-        worker.onmessage = function (e) {
-          switch (e.data.type) {
-            // case 'event':
-            //   if (e.data.data === "onRuntimeInitialized")
-            //     worker.postMessage({ seed: window.SEED, input: emscriptenInputConfig.value, type: 'run', nWorkers: window.N_WORKERS })
-            //   break;
-            case 'result':
-              console.log(`Data from worker:${e.data.data.time}`)
-              // e.data.data.files.forEach((file, index) => {
-              //   saveAsFile(file.content, file.name);
-              // })
-
-              resolve(e.data.data)
-              break;
-            case 'print':
-              console.log(`Worker${index}-${i}:${e.data.data}`);
-            default:
-            //console.log(`Worker ${index}: ${e.data.type} ${e.data.data}`);
-          }
-        }
-      }))).then((results) => {
-        console.log(`All workers finished`);
-        const time = results.map(a => a['value']['time']);
-        const files = results.map(a => a['value']['files']);
-        const times = results.map(a => a['value']['times']);
-
-        const end = performance.now();
-        timeStamps.push(["end", end]);
-
-        const total = end - start;
-        console.log(`Total time: ${total}`);
-        const res = {
-          "time": time, times,
-          "files": files, "total": total,
-          "workers": window.N_WORKERS, "workersInit": endWorkers - startWorkers,
-          "compile": endCompile - startCompile,
-          timeStamps, navigationTimestamp: window.performance.timing.navigationStart
-        };
-        window.res = res;
-
-        resolve(res);
-        //alert(`Total time: ${total}`);
-      })
-
-    })
-
-    runButton.onclick = () => {
-      handleClick();
-    }
-
-    window.loadEagerWorkers = () => {
-      eagerWorkers = initWorkers();
-    }
-
-    window.runSimulation = handleClick;
-
-
-
-    window.runCompile = () => new Promise(resolve => {
-      if (compiledModule) {
-        return resolve("Compiled")
-      }
-
-      WebAssembly.compileStreaming(fetch("/example/B1/build/wasm/exampleB1.wasm")).then((mod) => {
-        compiledModule = mod;
-        resolve("Compiled")
-      }
+      const runButton = document.querySelector("#run");
+      const emscriptenInputConfig = document.querySelector(
+        "#emscriptenInputConfig"
       );
-    })
+      let index = 0;
 
+      class PromiseQueue {
+        queue = Promise.resolve(true);
 
+        add(operation) {
+          return new Promise((resolve, reject) => {
+            this.queue = this.queue.then(operation).then(resolve).catch(reject);
+          });
+        }
+      }
 
-    const preModule = {
-      preRun: [],
-      postRun: [],
-      onRuntimeInitialized: function () {
-        console.log("onRuntimeInitialized");
-      },
-      instantiateWasm: function (info, receiveInstance) {
-        WebAssembly.instantiate(compiledModule, info).then(instance => {
-          receiveInstance(instance, compiledModule);
+      const initWorkersParallel = () =>
+        new Array(N_WORKERS).fill(0).map(
+          (_, i) =>
+            new Promise((resolve) => {
+              const worker = new Worker("worker.js");
+              worker.postMessage({ type: "module", module: compiledModule });
+              worker.onmessage = function (e) {
+                switch (e.data.type) {
+                  case "event":
+                    if (e.data.data === "onRuntimeInitialized") {
+                      resolve(worker);
+                      console.log(`Worker ${i} is ready`);
+                    }
+                }
+              };
+            })
+        );
+
+      const initWorkersQueue = async () => {
+        const queue = new PromiseQueue();
+
+        const workers = [];
+        for (let i = 0; i < window.N_WORKERS; i++) {
+          queue.add(
+            () =>
+              new Promise((resolve) => {
+                setTimeout(() => {
+                  const worker = new Worker("worker.js");
+                  worker.postMessage({
+                    type: "module",
+                    module: compiledModule,
+                    returnResultFiles: window.RETURN_FILES,
+                  });
+                  worker.onmessage = function (e) {
+                    switch (e.data.type) {
+                      case "event":
+                        if (e.data.data === "onRuntimeInitialized") {
+                          resolve(worker);
+                          workers.push(worker);
+                          console.log(`Worker ${i} is ready`);
+                        }
+                    }
+                  };
+                }, 0);
+              })
+          );
+        }
+
+        await queue.queue;
+        return workers;
+      };
+
+      const initFunction = {
+        queue: initWorkersQueue,
+        parallel: initWorkersParallel,
+      };
+      let compiledModule = null;
+
+      const handleClick = () =>
+        new Promise(async (resolve) => {
+          const timeStamps = [];
+
+          const startCompile = performance.now();
+          timeStamps.push(["startCompile", startCompile]);
+          await runCompile();
+          const endCompile = performance.now();
+          timeStamps.push(["endCompile", endCompile]);
+
+          console.log("Compiled");
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const start = performance.now();
+          timeStamps.push(["start", start]);
+
+          index++;
+          console.log(`Run simulation ${index}`);
+          console.log(`Seed: ${window.SEED}`);
+          console.log(`Number of workers: ${window.N_WORKERS}`);
+          console.log(`Waiting for runtime to be initialized...`);
+
+          const startWorkers = performance.now();
+          timeStamps.push(["startWorkers", startWorkers]);
+          let eagerWorkers = await initFunction[window.INIT_MODE]();
+          await Promise.allSettled(eagerWorkers);
+          const endWorkers = performance.now();
+          timeStamps.push(["endWorkers", endWorkers]);
+
+          const input = emscriptenInputConfig.value || window.INPUT_FILE;
+
+          console.log(`Runtime initialized`);
+
+          Promise.allSettled(
+            eagerWorkers.map(
+              (workerPromise, i) =>
+                new Promise(async (resolve) => {
+                  const worker = await workerPromise;
+                  console.log(`Worker ${index}-${i} is ready`);
+
+                  worker.postMessage({
+                    seed: window.SEED + i,
+                    input,
+                    type: "run",
+                    nWorkers: window.N_WORKERS,
+                  });
+
+                  worker.onmessage = function (e) {
+                    switch (e.data.type) {
+                      // case 'event':
+                      //   if (e.data.data === "onRuntimeInitialized")
+                      //     worker.postMessage({ seed: window.SEED, input: emscriptenInputConfig.value, type: 'run', nWorkers: window.N_WORKERS })
+                      //   break;
+                      case "result":
+                        console.log(`Data from worker:${e.data.data.time}`);
+                        // e.data.data.files.forEach((file, index) => {
+                        //   saveAsFile(file.content, file.name);
+                        // })
+
+                        resolve(e.data.data);
+                        break;
+                      case "print":
+                        console.log(`Worker${index}-${i}:${e.data.data}`);
+                      default:
+                      //console.log(`Worker ${index}: ${e.data.type} ${e.data.data}`);
+                    }
+                  };
+                })
+            )
+          ).then((results) => {
+            console.log(`All workers finished`);
+            const time = results.map((a) => a["value"]["time"]);
+            const files = results.map((a) => a["value"]["files"]);
+            const times = results.map((a) => a["value"]["times"]);
+
+            const end = performance.now();
+            timeStamps.push(["end", end]);
+
+            const total = end - start;
+            console.log(`Total time: ${total}`);
+            const res = {
+              time: time,
+              times,
+              files: files,
+              total: total,
+              workers: window.N_WORKERS,
+              workersInit: endWorkers - startWorkers,
+              compile: endCompile - startCompile,
+              timeStamps,
+              navigationTimestamp: window.performance.timing.navigationStart,
+            };
+            window.res = res;
+
+            resolve(res);
+            //alert(`Total time: ${total}`);
+          });
         });
 
-        return {};
-      }
-    }
+      runButton.onclick = () => {
+        handleClick();
+      };
 
-    window.runPrecompiled = () => new Promise(resolve => {
-      createModule(preModule).then((mod) => {
-        console.log("Module created");
-        resolve("Module created")
-      });
-    })
+      window.loadEagerWorkers = () => {
+        eagerWorkers = initWorkersQueue();
+      };
 
+      window.runSimulation = handleClick;
 
-  </script>
+      window.runCompile = () =>
+        new Promise((resolve) => {
+          if (compiledModule) {
+            return resolve("Compiled");
+          }
 
+          WebAssembly.compileStreaming(
+            fetch("/example/B1/build/wasm/exampleB1.wasm")
+          ).then((mod) => {
+            compiledModule = mod;
+            resolve("Compiled");
+          });
+        });
 
-</body>
+      const preModule = {
+        preRun: [],
+        postRun: [],
+        onRuntimeInitialized: function () {
+          console.log("onRuntimeInitialized");
+        },
+        instantiateWasm: function (info, receiveInstance) {
+          WebAssembly.instantiate(compiledModule, info).then((instance) => {
+            receiveInstance(instance, compiledModule);
+          });
 
+          return {};
+        },
+      };
+
+      window.runPrecompiled = () =>
+        new Promise((resolve) => {
+          createModule(preModule).then((mod) => {
+            console.log("Module created");
+            resolve("Module created");
+          });
+        });
+    </script>
+  </body>
 </html>

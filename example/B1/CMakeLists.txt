@@ -43,7 +43,7 @@ target_link_libraries(exampleB1 ${Geant4_LIBRARIES})
 
 if(EMSCRIPTEN)
   set_target_properties(exampleB1 PROPERTIES
-  LINK_FLAGS " -O1 -sMODULARIZE -sEXPORT_NAME='createModule' -s INITIAL_MEMORY=25MB -s WASM=1 -s ENVIRONMENT='worker' -sFORCE_FILESYSTEM \
+  LINK_FLAGS " -O3 -sMODULARIZE -sEXPORT_NAME='createModule' -s INITIAL_MEMORY=1000MB -s WASM=1 -s ENVIRONMENT='worker' -sFORCE_FILESYSTEM \
   -s EXPORTED_RUNTIME_METHODS=['FS'] \
   --pre-js ../../setup_env.js \
   --use-preload-cache \

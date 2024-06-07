@@ -7,7 +7,7 @@ testy przegladaerjk
 - pusta strona jako baseline zuzycie ramu
 - alokacja 100mb ramu zeby pokazac jak prtzekąłda sie alokacja w przegladarce - zaznaczyc eventy - pokazac initial memory i allow growth
 
-- załadwoanei plików i pokazanie i zuywanja ramu - zazaczyc eventy <-
+- załadwoanei plików i pokazanie i zuywanja ramu - zazaczyc eventy
 
 - pełana aplakicja 1 test pokazac komilacje, inicializacjie i uruchemonie - evbenty
 
@@ -18,7 +18,7 @@ Posprzatac uruchamianei testów - wrsja sekewncyjna (w przyszłosci pozosatłe)?
 - testy wydajnosi resta czyli skaolanie problemu - detektor , czastki
 - tesy na wielu wątkach
 
-rodzaje wykresów
+rodzaje wykresów <-
 
 y - ram, x- czas, zazanaczoen kluczowe timestampy programu
 
